@@ -1,0 +1,77 @@
+# 📂 Day 03: C# Fundamentals II - Object-Oriented Programming (OOP) & Domain Modeling
+
+## 📝 Objective
+The primary focus of Day 3 was to design a robust, clean, and tightly encapsulated domain model simulating a **Library Management System** in C# 12. This lab demonstrates advanced Object-Oriented Programming (OOP) principles, analyzing memory allocations, enforcing state safety, and implementing loose coupling using polymorphic interfaces.
+
+---
+
+## 🛠️ Key Architectural Concepts Covered
+
+### 1. Classes vs. Records vs. Structs
+- **Class (`Book`, `LibraryMember`):** Used as reference types focusing on identity and stateful behavior.
+- **Record (`MemberDto`):** Used as an immutable reference type designed for safe, value-based data transfer (DTO) across layers.
+- **Struct:** Used for lightweight, value-type data structures allocated on the Stack to optimize memory and performance.
+
+### 2. Strict Encapsulation
+- Shielded object states from unauthorized external mutation by using `private` backing fields and `private set` access modifiers.
+- Enforced domain validation rules and initial state safety inside custom constructors.
+
+### 3. Abstraction: Interfaces over Inheritance
+- Decoupled system# 📂 Day 03: C# Fundamentals II - Object-Oriented Programming (OOP) & Domain Modeling
+
+## 📝 Objective
+The primary focus of Day 3 was to design a robust, clean, and tightly encapsulated domain model simulating a **Library Management System** in C# 12. This lab demonstrates advanced Object-Oriented Programming (OOP) principles, analyzing memory allocations, enforcing state safety, and implementing loose coupling using polymorphic interfaces.
+
+---
+
+## 🛠️ Key Architectural Concepts Covered
+
+### 1. Classes vs. Records vs. Structs
+- **Class (`Book`, `LibraryMember`):** Used as reference types focusing on identity and stateful behavior.
+- **Record (`MemberDto`):** Used as an immutable reference type designed for safe, value-based data transfer (DTO) across layers.
+- **Struct:** Used for lightweight, value-type data structures allocated on the Stack to optimize memory and performance.
+
+### 2. Strict Encapsulation
+- Shielded object states from unauthorized external mutation by using `private` backing fields and `private set` access modifiers.
+- Enforced domain validation rules and initial state safety inside custom constructors.
+
+### 3. Abstraction: Interfaces over Inheritance
+- Decoupled system components by favoring interfaces (representing "Can-Do" contracts) over tight inheritance hierarchies ("Is-A" relationships).
+- Declared the `ILendable` interface to standardize asset lending operations across unrelated domain objects.
+
+### 4. Polymorphism in Practice
+- Implemented the `ILendable` contract on two logically distinct classes: `Book` and `Laptop`.
+- Demonstrated polymorphism by writing a transaction handler method that accepts `ILendable` abstract contracts rather than concrete classes, decoupling the business logic.
+
+---
+
+## 📂 Project File Structure
+All project files are organized in a clean flat structure under this directory:
+- `Day03.sln` - The Visual Studio solution file.
+- `Day03.csproj` - The project configuration.
+- `Program.cs` - Contains the application entry point and domain classes.
+- `README.md` - Day 03 documentation (this file).
+
+---
+
+## ⚙️ How to Run
+Open `Day03.sln` in Visual Studio 2022, and run the program (or press `F5`) to observe the polymorphic lending transactions in the console output. components by favoring interfaces (representing "Can-Do" contracts) over tight inheritance hierarchies ("Is-A" relationships).
+- Declared the `ILendable` interface to standardize asset lending operations across unrelated domain objects.
+
+### 4. Polymorphism in Practice
+- Implemented the `ILendable` contract on two logically distinct classes: `Book` and `Laptop`.
+- Demonstrated polymorphism by writing a transaction handler method that accepts `ILendable` abstract contracts rather than concrete classes, decoupling the business logic.
+
+---
+
+## 📂 Project File Structure
+All project files are organized in a clean flat structure under this directory:
+- `Day03.sln` - The Visual Studio solution file.
+- `Day03.csproj` - The project configuration.
+- `Program.cs` - Contains the application entry point and domain classes.
+- `README.md` - Day 03 documentation (this file).
+
+---
+
+## ⚙️ How to Run
+Open `Day03.sln` in Visual Studio 2022, and run the program (or press `F5`) to observe the polymorphic lending transactions in the console output.
