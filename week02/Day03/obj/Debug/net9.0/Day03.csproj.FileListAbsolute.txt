@@ -1,0 +1,15 @@
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\bin\Debug\net9.0\Day03.exe
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\bin\Debug\net9.0\Day03.deps.json
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\bin\Debug\net9.0\Day03.runtimeconfig.json
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\bin\Debug\net9.0\Day03.dll
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\bin\Debug\net9.0\Day03.pdb
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.GeneratedMSBuildEditorConfig.editorconfig
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.AssemblyInfoInputs.cache
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.AssemblyInfo.cs
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.csproj.CoreCompileInputs.cache
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.sourcelink.json
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.dll
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\refint\Day03.dll
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.pdb
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\Day03.genruntimeconfig.cache
+F:\Visual Studio\BinX-Backend-Internship\week02\Day03\obj\Debug\net9.0\ref\Day03.dll
