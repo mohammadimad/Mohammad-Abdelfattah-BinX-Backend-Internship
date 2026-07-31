@@ -8,28 +8,29 @@ namespace Day04.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
-        private static readonly List<Book> _books = new List<Book>
-        {
-            new Book { Id = 101, Title = "Clean Code", Author = "Robert C. Martin", Price = 45.00m },
-            new Book { Id = 102, Title = "C# in Depth", Author = "Jon Skeet", Price = 50.00m },
-            new Book { Id = 103, Title = "Design Patterns", Author = "Erich Gamma", Price = 55.50m }
-        };
+        private readonly IBookService _bookService;
 
-        [HttpGet]
-        public IActionResult GetBooks()
+        // 2. حقن الخدمة عبر البناء (Constructor Injection)
+        public BooksController(IBookService bookService)
         {
-            return Ok(_books);
+            _bookService = bookService;
         }
 
+        [HttpGet]
+        public IActionResult GetAllBooks()
+        {
+            var books = _bookService.GetBooks();
+            return Ok(books);
+        }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public IActionResult GetBookById(int id)
         {
-            var book = _books.FirstOrDefault(b => b.Id == id);
+            var book = _bookService.GetBookById(id);
 
             if (book == null)
             {
-                return NotFound($"Book with ID {id} was not found.");
+                return NotFound(new { Message = $"Book with ID {id} was not found." });
             }
 
             return Ok(book);

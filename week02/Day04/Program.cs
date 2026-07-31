@@ -16,8 +16,16 @@ namespace Day04
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+            app.UseMiddleware<RequestTimeMiddleware>();
+            app.Use(async (context, next) =>
+            {
+                var method = context.Request.Method;
+                var path = context.Request.Path;
+                Console.WriteLine($"[Request Log] HTTP {method} -> Path: {path}");
 
-            // 1. تفعيل السواجر أولاً في بيئة التطوير
+                await next();
+            });
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -25,6 +33,7 @@ namespace Day04
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My First API V1");
                 });
+               
             }
 
             app.UseHttpsRedirection();
