@@ -1,7 +1,7 @@
 [
   {
     "ContainingType": "Day04.Controllers.BooksController",
-    "Method": "GetBooks",
+    "Method": "GetAllBooks",
     "RelativePath": "api/Books",
     "HttpMethod": "GET",
     "IsController": true,
@@ -24,44 +24,6 @@
       }
     ],
     "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Day04.Program\u002B\u003C\u003Ec__DisplayClass0_0",
-    "Method": "\u003CMain\u003Eb__1",
-    "RelativePath": "api/minimal/books",
-    "HttpMethod": "GET",
-    "IsController": false,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "Day04.Program\u002B\u003C\u003Ec__DisplayClass0_0",
-    "Method": "\u003CMain\u003Eb__2",
-    "RelativePath": "api/minimal/books/{id}",
-    "HttpMethod": "GET",
-    "IsController": false,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ]
   },
   {
     "ContainingType": "Day04.Controllers.UsersController",

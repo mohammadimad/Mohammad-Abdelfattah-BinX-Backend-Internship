@@ -2,7 +2,7 @@
 {
     public interface IBookService
     {
-            IReadOnlyList<Book<int>> GetBooks();
-            Book<int>? GetBookById(int id);
+            IReadOnlyList<Book> GetBooks();
+            Book? GetBookById(int id);
     }
 }
