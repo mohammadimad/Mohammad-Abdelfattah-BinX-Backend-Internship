@@ -1,80 +1,62 @@
-# 📂 Day 02 SQL Server Schema Design & Database Normalization (3NF)
+# 📂 Day 02: SQL Server Schema Design & Database Normalization (3NF)
 
 ## 📝 Objective
-The primary focus of Day 2 was to transition the logical API resource maps into a highly efficient, relational, and fully normalized database schema targeting Third Normal Form (3NF) in SQL Server. This design eliminates data redundancy, prevents updatedelete anomalies, enforces referential integrity, and optimizes system storage.
+The primary focus of Day 2 was to translate our logical API resource models into a physically persistent, highly optimized relational database schema in SQL Server. This lab covers the rigorous application of the **Three Normal Forms (1NF, 2NF, 3NF)**, establishing strict referential integrity through Primary and Foreign Keys, and selecting memory-efficient column data types to protect financial and system data integrity.
 
 ---
 
-## 🛠️ Completed Schema Design
+## 🧠 Core Architectural Concepts Learned
 
-### 🔹 1. Entities & Attributes Mapping
-The Library Lending System is designed around five normalized relational entities
-- `Authors` Represents book creators independently to enforce 3NF.
-- `Books` Represents the physical catalog assets.
-- `Members` Represents registered library subscribers.
-- `MemberPhones` Resolves 1NF by storing multiple phone numbers per member atomically.
-- `LendingRecords` Serves as the junctionassociative table resolving the Many-to-Many relationship between Members and Books.
+### 1. Database Normalization (Why Normalize?)
+Designing a relational database without normalization leads to data redundancy, massive storage waste, and severe data anomalies:
+- **Insert Anomaly:** Inability to insert a record because some unrelated data is missing.
+- **Update Anomaly:** Updating a record (like a member's name) in one row but missing other duplicated rows, leaving the database in an inconsistent state.
+- **Delete Anomaly:** Deleting a record (like deleting a loan transaction) which accidentally wipes out the entire member's profile.
 
-### 🔹 2. Normalization Process (1NF, 2NF, 3NF)
-- 1NF (Atomic Values) Enforced atomic values in every column. Decoupled member phone numbers into a separate `MemberPhones` table to prevent comma-separated text values inside cells.
-- 2NF (No Partial Dependency) Ensured all non-key attributes depend entirely on single surrogate primary keys (`Id`).
-- 3NF (No Transitive Dependency) Eliminated transitive dependencies. Author details were moved to an independent `Authors` table (referenced via `AuthorId` in `Books`) to prevent data duplication.
+### 2. The Three Normal Forms (1NF, 2NF, 3NF) under the Hood
+- **First Normal Form (1NF - Atomicity):** Requires that every column contains atomic (indivisible) values. Storing nested lists or comma-separated values in a single cell (e.g., `Phones: "111, 222"`) is strictly prohibited.
+- **Second Normal Form (2NF - Partial Dependency):** Requires that every non-key column must depend on the *entire* primary key, eliminating partial dependencies (primarily relevant with composite keys).
+- **Third Normal Form (3NF - Transitive Dependency):** Requires that non-key columns must depend *only* on the primary key, and not on other non-key columns. Storing an author's email inside the `Books` table violates 3NF, requiring the extraction of an `Authors` table.
 
----
-
-## 🔹 3. Database Schema & Columns Configuration
-
-#### Table `Authors`
- Column Name  Data Type  Key  Constraint  Description 
- ---  ---  ---  --- 
- Id  `INT`  `PK, IDENTITY(1,1)`  Unique author identifier 
- Name  `NVARCHAR(100)`  `NOT NULL`  Full name of the author 
- Email  `VARCHAR(100)`  `NULLABLE`  Author's contact email 
-
-#### Table `Books`
- Column Name  Data Type  Key  Constraint  Description 
- ---  ---  ---  --- 
- Id  `INT`  `PK, IDENTITY(1,1)`  Unique book identifier 
- Title  `NVARCHAR(150)`  `NOT NULL`  The title of the book 
- Price  `DECIMAL(10,2)`  `NOT NULL`  Strict monetary precision to prevent rounding errors 
- AuthorId  `INT`  `FK - Authors(Id)`  References the author of the book 
-
-#### Table `Members`
- Column Name  Data Type  Key  Constraint  Description 
- ---  ---  ---  --- 
- Id  `INT`  `PK, IDENTITY(1,1)`  Unique member identifier 
- FullName  `NVARCHAR(100)`  `NOT NULL`  Full legal name of the subscriber 
- Email  `VARCHAR(100)`  `NOT NULL, UNIQUE`  Unique contact email address 
-
-#### Table `MemberPhones`
- Column Name  Data Type  Key  Constraint  Description 
- ---  ---  ---  --- 
- Id  `INT`  `PK, IDENTITY(1,1)`  Unique phone record identifier 
- MemberId  `INT`  `FK - Members(Id)`  References the phone owner 
- PhoneNumber `VARCHAR(15)`  `NOT NULL`  Member's phone number 
-
-#### Table `LendingRecords` (Associative Junction Table)
- Column Name  Data Type  Key  Constraint  Description 
- ---  ---  ---  --- 
- Id  `INT`  `PK, IDENTITY(1,1)`  Unique transaction identifier 
- BookId  `INT`  `FK - Books(Id)`  References the borrowed book 
- MemberId  `INT`  `FK - Members(Id)` References the borrowing member 
- LendDate  `DATETIME2`  `NOT NULL`  Timestamp of checkout transaction 
- ReturnDate  `DATETIME2`  `NULLABLE`  Timestamp of return (null until returned) 
+### 3. Precision Over Performance: The Monetary Float Danger
+- **The Float Trap:** Using `FLOAT` or `REAL` types for monetary/financial values is a severe bug. Floating-point types use approximate binary representations, resulting in tiny, cumulative rounding errors (e.g., `0.1 + 0.2 = 0.300000000004`), which is unacceptable for audit trials and financial calculations.
+- **The Architect's Choice:** Always use **`DECIMAL(18,2)`** in SQL Server for monetary values, securing absolute, non-rounded decimal precision.
+- **Storage Efficiency:** Choose narrow column types: `INT` for standard numeric IDs, and sized `NVARCHAR(100)` rather than unbounded `NVARCHAR(MAX)` to optimize indexing speed and disk page utilization.
 
 ---
 
-## 🔗 Referential Integrity (FK Constraints)
-- Foreign Keys are explicitly defined across relationships
-  - `Books(AuthorId)` $rightarrow$ `Authors(Id)`
-  - `MemberPhones(MemberId)` $rightarrow$ `Members(Id)` (ON DELETE CASCADE)
-  - `LendingRecords(BookId)` $rightarrow$ `Books(Id)`
-  - `LendingRecords(MemberId)` $rightarrow$ `Members(Id)`
-- Enforces Referential Integrity to prevent orphan records and ensure relational validity.
+## 🛠️ Hands-On Lab: Normalized Library Schema (3NF Design)
+
+- **Selected Domain:** Library Lending System
+- **Applied Normalization:** Third Normal Form (3NF)
+
+### 📊 Normalized Relational Table Schemas
+
+#### 1. Table: `Books` (Primary Catalog Entity)
+- **`Id`** (`INT`, Primary Key, `IDENTITY(1,1)`): Unique book auto-increment identifier.
+- **`Title`** (`NVARCHAR(150)`, `NOT NULL`): The title of the catalog asset.
+- **`Price`** (`DECIMAL(18,2)`, `NOT NULL`): Standard price of the book.
+
+#### 2. Table: `Members` (User Registry Entity)
+- **`Id`** (`INT`, Primary Key, `IDENTITY(1,1)`): Unique member auto-increment identifier.
+- **`Name`** (`NVARCHAR(100)`, `NOT NULL`): Full name of the library member.
+- **`JoinedDate`** (`DATETIME2`, `NOT NULL`): Registration timestamp.
+
+#### 3. Table: `LendingRecords` (Many-to-Many Associative Join Table)
+- **`Id`** (`INT`, Primary Key, `IDENTITY(1,1)`): Unique loan transaction identifier.
+- **`BookId`** (`INT`, Foreign Key `-> Books(Id)`, `NOT NULL`): References the borrowed book.
+- **`MemberId`** (`INT`, Foreign Key `-> Members(Id)`, `NOT NULL`): References the borrowing member.
+- **`LendingDate`** (`DATETIME2`, `NOT NULL`): Timestamp of the checkout transaction.
+- **`ReturnDate`** (`DATETIME2`, `NULLABLE`): Timestamp of return (remains null until the book is returned).
+
+---
+
+## 🔗 Referential Integrity Constraints
+- Foreign keys are explicitly defined on `LendingRecords(BookId)` and `LendingRecords(MemberId)`.
+- This enforces **Referential Integrity** at the engine level, preventing orphan rows (e.g., blocking the checkout of a non-existent book, and preventing the deletion of a member who has active pending borrows).
 
 ---
 
 ## 🎨 Entity Relationship Diagram (ERD)
-The database ERD schema was diagrammed using dbdiagram.io representing table schemas, keys, constraints, and relationships. 
-
-![ERD Diagram](.erd.png)
+The database ERD schema was diagrammed using **dbdiagram.io** representing the table schemas, keys, constraints, and relationships.
+*(Attach your exported ERD diagram image here `![ERD Diagram](./erd.png)`)*

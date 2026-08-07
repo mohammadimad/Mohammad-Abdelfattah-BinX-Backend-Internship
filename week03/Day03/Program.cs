@@ -1,5 +1,6 @@
 
 using Day03.Data;
+using Day03.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Day03
@@ -17,7 +18,7 @@ namespace Day03
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            builder.Services.AddScoped<IMemberService, MemberService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
