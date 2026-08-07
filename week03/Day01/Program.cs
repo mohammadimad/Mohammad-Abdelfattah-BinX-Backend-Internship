@@ -1,4 +1,7 @@
 
+using Day01.Domain;
+using Day01.Service;
+
 namespace Day01
 {
     public class Program
@@ -13,7 +16,7 @@ namespace Day01
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            builder.Services.AddScoped<IBookService, BookService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
