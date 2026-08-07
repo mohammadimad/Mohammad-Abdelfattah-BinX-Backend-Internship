@@ -1,0 +1,22 @@
+[
+  {
+    "ContainingType": "Day01.Controllers.ProductsV1Controller",
+    "Method": "Get",
+    "RelativePath": "api/v1/products",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Day01.Controllers.ProductsV2Controller",
+    "Method": "Get",
+    "RelativePath": "api/v2/products",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]

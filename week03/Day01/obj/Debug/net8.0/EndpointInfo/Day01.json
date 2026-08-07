@@ -1,0 +1,34 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Day01",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/products": {
+      "get": {
+        "tags": [
+          "ProductsV1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v2/products": {
+      "get": {
+        "tags": [
+          "ProductsV2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}
