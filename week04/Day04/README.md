@@ -36,4 +36,4 @@ The following tasks were successfully implemented and tested in the codebase:
 
 ---
 
-*Prepared by **[Your Name]** as part of the BinX Tech Backend Internship Program.*
+*Prepared by **[Mohammad Abelfattah]** as part of the BinX Tech Backend Internship Program.**
