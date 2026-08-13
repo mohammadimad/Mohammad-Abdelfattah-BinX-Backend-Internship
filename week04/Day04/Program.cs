@@ -1,10 +1,13 @@
 using Day03.Data;
 using Day03.Service;
 using Day03.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
 
 namespace Day03
@@ -43,6 +46,8 @@ namespace Day03
          .AddEntityFrameworkStores<LibraryDbContext>()
          .AddDefaultTokenProviders();
 
+           builder.Services.AddFluentValidationAutoValidation();
+           builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
