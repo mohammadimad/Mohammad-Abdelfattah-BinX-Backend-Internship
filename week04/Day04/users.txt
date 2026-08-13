@@ -1,0 +1,11 @@
+{
+  "username": "mos",
+  "email": "moa@example.com",
+  "password": "Dwawdafw2@"
+}
+
+{
+  "username": "area",
+  "email": "aea@example.com",
+  "password": "feafeaF@22"
+}
