@@ -1,4 +1,4 @@
-﻿using static CardiacMonitor.DTOs.PatientDtos;
+﻿using  CardiacMonitor.DTOs;
 
 namespace CardiacMonitor.Services
 {
@@ -7,6 +7,9 @@ namespace CardiacMonitor.Services
         {
             Task<IEnumerable<PatientResponse>> GetAllPatientsAsync();
             Task<PatientResponse?> GetPatientByIdAsync(int id);
+            Task<PatientResponse> CreatePatientAsync(CreatePatientRequest request);
+            Task<bool> UpdatePatientAsync(int id, UpdatePatientRequest request);
+            Task<bool> DeletePatientAsync(int id);
 
     }
 }

@@ -1,0 +1,11 @@
+{
+  "email": "sfwafw@gmaile.com",
+  "password": "Awqwe132@",
+  "role": "admin"
+}
+
+{
+  "email": "wasef",
+  "password": "Wasef12$",
+  "role": "Patient"
+}
