@@ -4,7 +4,6 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\Cardi
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\obj\Debug\net8.0\CardiacMonitor.Tests.AssemblyInfo.cs
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\obj\Debug\net8.0\CardiacMonitor.Tests.csproj.CoreCompileInputs.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\obj\Debug\net8.0\CardiacMonitor.Tests.sourcelink.json
-D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\bin\Debug\net8.0\CoverletSourceRootsMapping_CardiacMonitor.Tests
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\bin\Debug\net8.0\testhost.dll
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\bin\Debug\net8.0\CardiacMonitor.deps.json
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week05\Day01\CardiacMonitor\CardiacMonitor.Tests\bin\Debug\net8.0\CardiacMonitor.runtimeconfig.json

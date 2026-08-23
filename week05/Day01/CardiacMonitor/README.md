@@ -2,6 +2,10 @@
 
 A secure RESTful API for managing cardiac-care data, built with ASP.NET Core 8 and SQL Server. The system provides role-based access to patient profiles, vital signs, medications, and medical appointments, with JWT authentication and refresh-token rotation.
 
+## Day 1 Project Scope
+
+The chosen Phase 3 capstone is a Healthcare Management API focused on cardiac patient monitoring. Its scope covers patient profiles, vital signs, medications, appointments, and secure role-based access for administrators, doctors, and patients. By Week 9, it will provide the professional baseline required by the curriculum: a documented REST API and Postman collection, a normalized EF Core database with migrations and an ERD, JWT authentication with role-based access, unit and integration tests for critical routes, deployment, a passing CI/CD pipeline, and a complete README.
+
 ## Features
 
 - Patient profile management

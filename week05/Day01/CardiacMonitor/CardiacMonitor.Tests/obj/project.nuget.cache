@@ -1,12 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "HoqOddVN2Qc=",
+  "dgSpecHash": "eKTiAgs9gZg=",
   "success": true,
   "projectFilePath": "D:\\Visual Studio\\Mohammad-Abdelfattah-BinX-Backend-Internship\\week05\\Day01\\CardiacMonitor\\CardiacMonitor.Tests\\CardiacMonitor.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HasTech\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\HasTech\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
-    "C:\\Users\\HasTech\\.nuget\\packages\\coverlet.collector\\6.0.0\\coverlet.collector.6.0.0.nupkg.sha512",
     "C:\\Users\\HasTech\\.nuget\\packages\\fluentvalidation\\11.5.1\\fluentvalidation.11.5.1.nupkg.sha512",
     "C:\\Users\\HasTech\\.nuget\\packages\\fluentvalidation.aspnetcore\\11.3.0\\fluentvalidation.aspnetcore.11.3.0.nupkg.sha512",
     "C:\\Users\\HasTech\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\11.5.1\\fluentvalidation.dependencyinjectionextensions.11.5.1.nupkg.sha512",
