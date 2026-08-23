@@ -1,0 +1,6 @@
+@CardiacMonitor_HostAddress = http://localhost:5142
+
+GET {{CardiacMonitor_HostAddress}}/api/diagnostics/unhandled-error
+Accept: application/json
+
+###
