@@ -1,0 +1,90 @@
+erDiagram
+    AspNetUsers {
+        nvarchar Id PK
+        nvarchar UserName
+        nvarchar NormalizedUserName
+        nvarchar Email
+        nvarchar NormalizedEmail
+        bit EmailConfirmed
+        nvarchar PasswordHash
+        nvarchar SecurityStamp
+        nvarchar ConcurrencyStamp
+        nvarchar PhoneNumber
+        bit PhoneNumberConfirmed
+        bit TwoFactorEnabled
+        datetimeoffset LockoutEnd
+        bit LockoutEnabled
+        int AccessFailedCount
+    }
+
+    AspNetRoles {
+        nvarchar Id PK
+        nvarchar Name
+        nvarchar NormalizedName
+        nvarchar ConcurrencyStamp
+    }
+
+    AspNetUserRoles {
+        nvarchar UserId PK,FK
+        nvarchar RoleId PK,FK
+    }
+
+    Patients {
+        int Id PK
+        nvarchar UserId FK "nullable, unique"
+        nvarchar FirstName
+        nvarchar LastName
+        datetime2 DateOfBirth
+        nvarchar Gender
+        nvarchar ContactNumber
+    }
+
+    VitalSigns {
+        int Id PK
+        int PatientId FK
+        int HeartRate
+        decimal OxygenSaturation "decimal(5,2)"
+        int SystolicBP
+        int DiastolicBP
+        datetime2 RecordedAt
+    }
+
+    Medications {
+        int Id PK
+        int PatientId FK
+        nvarchar Name
+        nvarchar Dosage
+        nvarchar Frequency
+        datetime2 StartDate
+        datetime2 EndDate "nullable"
+        bit IsActive
+    }
+
+    Appointments {
+        int Id PK
+        int PatientId FK
+        nvarchar DoctorId FK
+        datetime2 AppointmentDate
+        nvarchar Status
+        nvarchar Notes "nullable"
+    }
+
+    RefreshTokens {
+        int Id PK
+        nvarchar UserId FK
+        nvarchar Token
+        nvarchar JwtId
+        bit IsUsed
+        bit IsRevoked
+        datetime2 AddedDate
+        datetime2 ExpiryDate
+    }
+
+    AspNetUsers o|--o| Patients : "owns profile (CASCADE)"
+    AspNetUsers ||--o{ RefreshTokens : "has (CASCADE)"
+    AspNetUsers ||--o{ Appointments : "assigned as doctor (RESTRICT)"
+    AspNetUsers ||--o{ AspNetUserRoles : has
+    AspNetRoles ||--o{ AspNetUserRoles : contains
+    Patients ||--o{ VitalSigns : "has (CASCADE)"
+    Patients ||--o{ Medications : "has (CASCADE)"
+    Patients ||--o{ Appointments : "has (CASCADE)"

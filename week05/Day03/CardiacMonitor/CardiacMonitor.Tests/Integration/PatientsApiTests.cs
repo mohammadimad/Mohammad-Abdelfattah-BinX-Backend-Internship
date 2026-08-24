@@ -13,7 +13,7 @@ using Xunit;
 
 namespace CardiacMonitor.Tests.Integration;
 
-// WebApplicationFactory يشغّل التطبيق كاملًا داخل الذاكرة ويعطينا HttpClient بدون فتح منفذ شبكة حقيقي.
+// WebApplicationFactory The application runs entirely within memory and gives us HttpClient without opening a real network port..
 public sealed class CardiacMonitorWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName = $"CardiacMonitorTests-{Guid.NewGuid()}";
@@ -28,7 +28,7 @@ public sealed class CardiacMonitorWebApplicationFactory : WebApplicationFactory<
         builder.UseEnvironment("Testing");
         builder.ConfigureServices(services =>
         {
-            // نستبدل SQL Server بقاعدة InMemory منفصلة حتى لا تغيّر الاختبارات بيانات التطوير.
+            // We replace SQL Server with a separate InMemory database so that tests do not change development data.
             services.RemoveAll<DbContextOptions<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>(options =>
@@ -43,7 +43,7 @@ public sealed class CardiacMonitorWebApplicationFactory : WebApplicationFactory<
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // إعادة إنشاء القاعدة تجعل كل اختبار مستقلاً وقابلاً للتكرار بأي ترتيب.
+        //Recreating the rule makes each test independent and repeatable in any order.
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
     }
@@ -59,7 +59,7 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         _factory.ResetDatabase();
     }
 
-    // نحصل على JWT حقيقي من endpoint تسجيل الدخول كما تطلب المادة لاختبار endpoint محمي.
+    //We get a real JWT from endpoint login to test endpoint protected.
     private static async Task<string> GetDoctorJwtTokenAsync(HttpClient client)
     {
         var loginRequest = new LoginRequest("doctor@cardiac.com", "Doctor@123");
@@ -81,10 +81,10 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
             new AuthenticationHeaderValue("Bearer", token);
         var patientId = 1;
 
-        // Act: طلب HTTP حقيقي يمر عبر routing وmiddleware وDI.
+        // Act: A genuine HTTP request goes through routing, middleware, and DI.
         var response = await client.GetAsync($"/api/patients/{patientId}");
 
-        // Assert: نفحص الحالة وكامل بيانات الاستجابة المطلوبة في مختبر Day03.
+        // Assert:We examine the case and all the required response data in the Day03 laboratory.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
@@ -111,7 +111,7 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         // Act
         var response = await client.GetAsync($"/api/patients/{nonExistentPatientId}");
 
-        // Assert: هذا هو مسار الخطأ لنفس endpoint.
+        // Assert: This is the error path for the same endpoint.
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -122,7 +122,7 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         var client = _factory.CreateClient();
         var patientId = 1;
 
-        // Act: لا نضيف Authorization header عمدًا.
+        // Act: We do not intentionally add the Authorization header.
         var response = await client.GetAsync($"/api/patients/{patientId}");
 
         // Assert

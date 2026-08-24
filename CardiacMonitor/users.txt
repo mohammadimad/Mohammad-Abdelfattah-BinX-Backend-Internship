@@ -9,3 +9,19 @@
   "password": "Wasef12$",
   "role": "Patient"
 }
+
+{
+  "email": "imad@gmail.com",
+  "password": "Wasef12$22",
+  "Role": "patient"
+}
+{
+  "email": "admin.demo@cardiac",
+  "password": "AdminDemo@123",
+  "role": "Admin"
+}
+
+{
+  "email": "221212demo@cardiac",
+  "password": "Adm1212inDemo@123" 
+}

@@ -9,37 +9,26 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace CardiacMonitor.Tests.Integration;
 
-// Hosts the complete API in memory and provides an HttpClient without a real network port.
+// WebApplicationFactory The application runs entirely within memory and gives us HttpClient without opening a real network port..
 public sealed class CardiacMonitorWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName = $"CardiacMonitorTests-{Guid.NewGuid()}";
 
-    // Sets an HTTPS base address for integration-test clients.
     public CardiacMonitorWebApplicationFactory()
     {
         ClientOptions.BaseAddress = new Uri("https://localhost");
     }
 
-    // Replaces production-only dependencies with isolated test dependencies.
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-
-        // Keep ILogger active without depending on the Windows Event Log.
-        builder.ConfigureLogging(logging =>
-        {
-            logging.ClearProviders();
-            logging.AddDebug();
-        });
-
         builder.ConfigureServices(services =>
         {
-            // Replace SQL Server with the isolated InMemory provider described in Day 3.
+            // We replace SQL Server with a separate InMemory database so that tests do not change development data.
             services.RemoveAll<DbContextOptions<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>(options =>
@@ -49,12 +38,12 @@ public sealed class CardiacMonitorWebApplicationFactory : WebApplicationFactory<
         });
     }
 
-    // Recreates the test database so each test starts from the same data.
     public void ResetDatabase()
     {
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+        //Recreating the rule makes each test independent and repeatable in any order.
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
     }
@@ -64,14 +53,13 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
 {
     private readonly CardiacMonitorWebApplicationFactory _factory;
 
-    // Stores the shared factory and resets its isolated database.
     public PatientsApiTests(CardiacMonitorWebApplicationFactory factory)
     {
         _factory = factory;
         _factory.ResetDatabase();
     }
 
-    // Gets a real JWT from the login endpoint for a protected-route test.
+    //We get a real JWT from endpoint login to test endpoint protected.
     private static async Task<string> GetDoctorJwtTokenAsync(HttpClient client)
     {
         var loginRequest = new LoginRequest("doctor@cardiac.com", "Doctor@123");
@@ -83,7 +71,6 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         return authResult!.Token!;
     }
 
-    // Verifies the happy path and the complete patient response body.
     [Fact]
     public async Task GetPatientById_WithValidToken_ReturnsOkAndPatient()
     {
@@ -94,10 +81,10 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
             new AuthenticationHeaderValue("Bearer", token);
         var patientId = 1;
 
-        // Act: Send a real HTTP request through routing, middleware, and DI.
+        // Act: A genuine HTTP request goes through routing, middleware, and DI.
         var response = await client.GetAsync($"/api/patients/{patientId}");
 
-        // Assert: Check the status and the complete response body.
+        // Assert:We examine the case and all the required response data in the Day03 laboratory.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
@@ -111,7 +98,6 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         Assert.Equal("+9759835279", patient.ContactNumber);
     }
 
-    // Verifies the not-found path for the same patient endpoint.
     [Fact]
     public async Task GetPatientById_WhenPatientDoesNotExist_ReturnsNotFound()
     {
@@ -125,11 +111,10 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         // Act
         var response = await client.GetAsync($"/api/patients/{nonExistentPatientId}");
 
-        // Assert: Check the not-found path for the same endpoint.
+        // Assert: This is the error path for the same endpoint.
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    // Verifies that the protected endpoint rejects a request without a JWT.
     [Fact]
     public async Task GetPatientById_WithoutToken_ReturnsUnauthorized()
     {
@@ -137,7 +122,7 @@ public class PatientsApiTests : IClassFixture<CardiacMonitorWebApplicationFactor
         var client = _factory.CreateClient();
         var patientId = 1;
 
-        // Act: Send the request without an Authorization header.
+        // Act: We do not intentionally add the Authorization header.
         var response = await client.GetAsync($"/api/patients/{patientId}");
 
         // Assert

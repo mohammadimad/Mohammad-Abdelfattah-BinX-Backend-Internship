@@ -192,3 +192,4 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.genruntimeconfig.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\ref\CardiacMonitor.dll
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\Cardiac Patient Monitoring API.postman_collection.json

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CardiacMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e7e4c989983a2fe4c0b0698253a19345ac06a44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88b46c32e71b6ae0a312cdc9aae971d523007cfa")]
 [assembly: System.Reflection.AssemblyProductAttribute("CardiacMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CardiacMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

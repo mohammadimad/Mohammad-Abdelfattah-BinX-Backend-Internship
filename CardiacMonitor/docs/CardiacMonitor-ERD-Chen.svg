@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1600" viewBox="0 0 2400 1600" role="img" aria-labelledby="title desc">
+  <title id="title">Cardiac Monitor Chen ERD</title>
+  <desc id="desc">Chen-style entity relationship diagram for users, patients, vital signs, medications and appointments.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.14"/>
+    </filter>
+    <style>
+      .background { fill:#f8fafc; }
+      .title { font:700 34px 'Segoe UI',Arial,sans-serif; fill:#0f172a; }
+      .subtitle { font:400 17px 'Segoe UI',Arial,sans-serif; fill:#475569; }
+      .entity { fill:#ffffff; stroke:#172033; stroke-width:3; filter:url(#shadow); }
+      .entity-text { font:700 22px 'Segoe UI',Arial,sans-serif; fill:#0f172a; text-anchor:middle; dominant-baseline:middle; }
+      .attribute { fill:#ffffff; stroke:#334155; stroke-width:2.2; }
+      .attribute-key { fill:#fff7ed; stroke:#c2410c; stroke-width:2.5; }
+      .attribute-fk { fill:#eff6ff; stroke:#0369a1; stroke-width:2.5; }
+      .attribute-text { font:500 17px 'Segoe UI',Arial,sans-serif; fill:#172033; text-anchor:middle; dominant-baseline:middle; }
+      .key-text { text-decoration:underline; font-weight:700; }
+      .relationship { fill:#e0f2fe; stroke:#0369a1; stroke-width:3; filter:url(#shadow); }
+      .relationship-text { font:700 17px 'Segoe UI',Arial,sans-serif; fill:#0c4a6e; text-anchor:middle; dominant-baseline:middle; }
+      .attribute-line { stroke:#94a3b8; stroke-width:2; fill:none; }
+      .relation-line { stroke:#1e293b; stroke-width:3.2; fill:none; }
+      .cardinality { font:700 17px 'Segoe UI',Arial,sans-serif; fill:#9a3412; paint-order:stroke; stroke:#f8fafc; stroke-width:6; stroke-linejoin:round; }
+      .note { font:500 15px 'Segoe UI',Arial,sans-serif; fill:#475569; }
+      .legend { fill:#ffffff; stroke:#cbd5e1; stroke-width:2; }
+      .legend-title { font:700 17px 'Segoe UI',Arial,sans-serif; fill:#0f172a; }
+      .legend-text { font:400 15px 'Segoe UI',Arial,sans-serif; fill:#334155; }
+    </style>
+  </defs>
+
+  <rect class="background" width="2400" height="1600"/>
+  <text class="title" x="70" y="58">Cardiac Monitor — Chen-Style ERD</text>
+  <text class="subtitle" x="70" y="88">Simplified presentation view — Identity role and refresh-token tables intentionally omitted</text>
+
+  <!-- Attribute connector lines: VitalSigns -->
+  <path class="attribute-line" d="M360 395 L220 260"/>
+  <path class="attribute-line" d="M390 390 L390 235"/>
+  <path class="attribute-line" d="M430 395 L580 260"/>
+  <path class="attribute-line" d="M350 445 L190 445"/>
+  <path class="attribute-line" d="M430 450 L590 445"/>
+  <path class="attribute-line" d="M365 475 L245 590"/>
+  <path class="attribute-line" d="M415 475 L535 590"/>
+
+  <!-- Attribute connector lines: AspNetUsers -->
+  <path class="attribute-line" d="M1870 260 L1760 170"/>
+  <path class="attribute-line" d="M1930 255 L2030 160"/>
+  <path class="attribute-line" d="M1970 305 L2160 305"/>
+  <path class="attribute-line" d="M1935 350 L2070 445"/>
+
+  <!-- Attribute connector lines: Patients -->
+  <path class="attribute-line" d="M1110 680 L955 570"/>
+  <path class="attribute-line" d="M1160 665 L1160 525"/>
+  <path class="attribute-line" d="M1220 675 L1380 570"/>
+  <path class="attribute-line" d="M1095 725 L920 725"/>
+  <path class="attribute-line" d="M1225 725 L1400 725"/>
+  <path class="attribute-line" d="M1110 770 L980 875"/>
+  <path class="attribute-line" d="M1210 775 L1320 880"/>
+
+  <!-- Attribute connector lines: Medications -->
+  <path class="attribute-line" d="M380 1130 L225 1015"/>
+  <path class="attribute-line" d="M430 1120 L430 980"/>
+  <path class="attribute-line" d="M470 1130 L620 1015"/>
+  <path class="attribute-line" d="M365 1180 L190 1180"/>
+  <path class="attribute-line" d="M475 1180 L650 1180"/>
+  <path class="attribute-line" d="M370 1220 L225 1340"/>
+  <path class="attribute-line" d="M420 1235 L420 1400"/>
+  <path class="attribute-line" d="M475 1220 L620 1340"/>
+
+  <!-- Attribute connector lines: Appointments -->
+  <path class="attribute-line" d="M1810 1130 L1635 1015"/>
+  <path class="attribute-line" d="M1860 1120 L1860 965"/>
+  <path class="attribute-line" d="M1910 1130 L2080 1015"/>
+  <path class="attribute-line" d="M1795 1180 L1590 1180"/>
+  <path class="attribute-line" d="M1925 1180 L2130 1180"/>
+  <path class="attribute-line" d="M1820 1225 L1690 1350"/>
+
+  <!-- Core relationship lines -->
+  <path class="relation-line" d="M480 435 L675 435"/>
+  <path class="relation-line" d="M825 435 C930 470 1010 590 1110 690"/>
+  <text class="cardinality" x="505" y="420">(1,1)</text>
+  <text class="cardinality" x="1040" y="620">(0,N)</text>
+
+  <path class="relation-line" d="M1200 670 C1260 545 1355 425 1455 350"/>
+  <path class="relation-line" d="M1605 350 C1700 335 1770 315 1830 305"/>
+  <text class="cardinality" x="1235" y="585">(0,1)</text>
+  <text class="cardinality" x="1750" y="320">(0,1)</text>
+
+  <path class="relation-line" d="M1110 750 C1000 835 930 945 825 1070"/>
+  <path class="relation-line" d="M675 1070 L480 1170"/>
+  <text class="cardinality" x="1025" y="830">(0,N)</text>
+  <text class="cardinality" x="520" y="1130">(1,1)</text>
+
+  <path class="relation-line" d="M1230 750 C1350 835 1450 935 1545 1060"/>
+  <path class="relation-line" d="M1695 1060 L1795 1170"/>
+  <text class="cardinality" x="1325" y="820">(0,N)</text>
+  <text class="cardinality" x="1725" y="1110">(1,1)</text>
+
+  <path class="relation-line" d="M2010 330 C2080 410 2105 515 2120 590"/>
+  <path class="relation-line" d="M2260 650 C2380 750 2360 1320 1900 1235"/>
+  <text class="cardinality" x="2070" y="430">(0,N)</text>
+  <text class="cardinality" x="1910" y="1270">(1,1)</text>
+
+  <!-- Entities -->
+  <rect class="entity" x="300" y="390" width="180" height="90" rx="4"/>
+  <text class="entity-text" x="390" y="436">VitalSigns</text>
+
+  <rect class="entity" x="1830" y="260" width="180" height="100" rx="4"/>
+  <text class="entity-text" x="1920" y="311">AspNetUsers</text>
+
+  <rect class="entity" x="1095" y="665" width="260" height="110" rx="4"/>
+  <text class="entity-text" x="1225" y="721">Patients</text>
+
+  <rect class="entity" x="300" y="1120" width="180" height="115" rx="4"/>
+  <text class="entity-text" x="390" y="1178">Medications</text>
+
+  <rect class="entity" x="1795" y="1120" width="210" height="115" rx="4"/>
+  <text class="entity-text" x="1900" y="1178">Appointments</text>
+
+  <!-- Relationship diamonds -->
+  <polygon class="relationship" points="675,435 750,380 825,435 750,490"/>
+  <text class="relationship-text" x="750" y="435">RECORDS</text>
+
+  <polygon class="relationship" points="1455,350 1530,295 1605,350 1530,405"/>
+  <text class="relationship-text" x="1530" y="340">HAS</text>
+  <text class="relationship-text" x="1530" y="363">PROFILE</text>
+
+  <polygon class="relationship" points="675,1070 750,1015 825,1070 750,1125"/>
+  <text class="relationship-text" x="750" y="1070">RECEIVES</text>
+
+  <polygon class="relationship" points="1545,1060 1620,1005 1695,1060 1620,1115"/>
+  <text class="relationship-text" x="1620" y="1060">BOOKS</text>
+
+  <polygon class="relationship" points="2100,650 2180,590 2260,650 2180,710"/>
+  <text class="relationship-text" x="2180" y="639">ASSIGNED</text>
+  <text class="relationship-text" x="2180" y="662">AS DOCTOR</text>
+  <text class="note" x="2020" y="750">Only a user carrying the Doctor role</text>
+
+  <!-- VitalSigns attributes -->
+  <ellipse class="attribute-key" cx="180" cy="220" rx="105" ry="42"/>
+  <text class="attribute-text key-text" x="180" y="220">Id (PK)</text>
+  <ellipse class="attribute-fk" cx="390" cy="195" rx="125" ry="42"/>
+  <text class="attribute-text" x="390" y="195">PatientId (FK)</text>
+  <ellipse class="attribute" cx="620" cy="220" rx="115" ry="42"/>
+  <text class="attribute-text" x="620" y="220">HeartRate</text>
+  <ellipse class="attribute" cx="150" cy="445" rx="135" ry="42"/>
+  <text class="attribute-text" x="150" y="445">OxygenSaturation</text>
+  <ellipse class="attribute" cx="635" cy="445" rx="110" ry="42"/>
+  <text class="attribute-text" x="635" y="445">RecordedAt</text>
+  <ellipse class="attribute" cx="200" cy="625" rx="110" ry="42"/>
+  <text class="attribute-text" x="200" y="625">DiastolicBP</text>
+  <ellipse class="attribute" cx="575" cy="625" rx="110" ry="42"/>
+  <text class="attribute-text" x="575" y="625">SystolicBP</text>
+
+  <!-- AspNetUsers attributes -->
+  <ellipse class="attribute-key" cx="1710" cy="135" rx="105" ry="42"/>
+  <text class="attribute-text key-text" x="1710" y="135">Id (PK)</text>
+  <ellipse class="attribute" cx="2070" cy="125" rx="110" ry="42"/>
+  <text class="attribute-text" x="2070" y="125">Email</text>
+  <ellipse class="attribute" cx="2210" cy="305" rx="130" ry="42"/>
+  <text class="attribute-text" x="2210" y="305">PasswordHash</text>
+  <ellipse class="attribute" cx="2115" cy="480" rx="125" ry="42"/>
+  <text class="attribute-text" x="2115" y="480">PhoneNumber</text>
+
+  <!-- Patients attributes -->
+  <ellipse class="attribute-key" cx="910" cy="530" rx="105" ry="42"/>
+  <text class="attribute-text key-text" x="910" y="530">Id (PK)</text>
+  <ellipse class="attribute-fk" cx="1160" cy="485" rx="125" ry="42"/>
+  <text class="attribute-text" x="1160" y="485">UserId (FK)?</text>
+  <ellipse class="attribute" cx="1430" cy="530" rx="115" ry="42"/>
+  <text class="attribute-text" x="1430" y="530">FirstName</text>
+  <ellipse class="attribute" cx="850" cy="725" rx="110" ry="42"/>
+  <text class="attribute-text" x="850" y="725">LastName</text>
+  <ellipse class="attribute" cx="1465" cy="725" rx="115" ry="42"/>
+  <text class="attribute-text" x="1465" y="725">DateOfBirth</text>
+  <ellipse class="attribute" cx="930" cy="920" rx="110" ry="42"/>
+  <text class="attribute-text" x="930" y="920">Gender</text>
+  <ellipse class="attribute" cx="1365" cy="925" rx="130" ry="42"/>
+  <text class="attribute-text" x="1365" y="925">ContactNumber</text>
+
+  <!-- Medications attributes -->
+  <ellipse class="attribute-key" cx="180" cy="975" rx="105" ry="42"/>
+  <text class="attribute-text key-text" x="180" y="975">Id (PK)</text>
+  <ellipse class="attribute-fk" cx="430" cy="940" rx="125" ry="42"/>
+  <text class="attribute-text" x="430" y="940">PatientId (FK)</text>
+  <ellipse class="attribute" cx="665" cy="975" rx="105" ry="42"/>
+  <text class="attribute-text" x="665" y="975">Name</text>
+  <ellipse class="attribute" cx="145" cy="1180" rx="105" ry="42"/>
+  <text class="attribute-text" x="145" y="1180">Dosage</text>
+  <ellipse class="attribute" cx="695" cy="1180" rx="115" ry="42"/>
+  <text class="attribute-text" x="695" y="1180">Frequency</text>
+  <ellipse class="attribute" cx="180" cy="1380" rx="110" ry="42"/>
+  <text class="attribute-text" x="180" y="1380">StartDate</text>
+  <ellipse class="attribute" cx="420" cy="1440" rx="110" ry="42"/>
+  <text class="attribute-text" x="420" y="1440">EndDate?</text>
+  <ellipse class="attribute" cx="665" cy="1380" rx="105" ry="42"/>
+  <text class="attribute-text" x="665" y="1380">IsActive</text>
+
+  <!-- Appointments attributes -->
+  <ellipse class="attribute-key" cx="1585" cy="975" rx="105" ry="42"/>
+  <text class="attribute-text key-text" x="1585" y="975">Id (PK)</text>
+  <ellipse class="attribute-fk" cx="1860" cy="925" rx="125" ry="42"/>
+  <text class="attribute-text" x="1860" y="925">PatientId (FK)</text>
+  <ellipse class="attribute-fk" cx="2130" cy="975" rx="125" ry="42"/>
+  <text class="attribute-text" x="2130" y="975">DoctorId (FK)</text>
+  <ellipse class="attribute" cx="1530" cy="1180" rx="150" ry="42"/>
+  <text class="attribute-text" x="1530" y="1180">AppointmentDate</text>
+  <ellipse class="attribute" cx="2190" cy="1180" rx="105" ry="42"/>
+  <text class="attribute-text" x="2190" y="1180">Status</text>
+  <ellipse class="attribute" cx="1640" cy="1390" rx="105" ry="42"/>
+  <text class="attribute-text" x="1640" y="1390">Notes?</text>
+
+  <!-- Legend -->
+  <g transform="translate(1970 1360)">
+    <rect class="legend" width="370" height="170" rx="10"/>
+    <text class="legend-title" x="20" y="32">Cardinality</text>
+    <text class="legend-text" x="20" y="62">(1,1) = exactly one</text>
+    <text class="legend-text" x="20" y="90">(0,1) = optional, at most one</text>
+    <text class="legend-text" x="20" y="118">(0,N) = zero or many</text>
+    <text class="legend-text" x="20" y="148">? = nullable attribute</text>
+  </g>
+
+  <text class="note" x="780" y="1535">Orange oval = primary key · Blue oval = foreign key · Diamond = relationship · Rectangle = entity</text>
+</svg>
