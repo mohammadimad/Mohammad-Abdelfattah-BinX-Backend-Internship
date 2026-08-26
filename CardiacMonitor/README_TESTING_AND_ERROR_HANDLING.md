@@ -488,11 +488,4 @@ private static AppDbContext CreateContext()
 private static string CreateJwt(string userId, string role)
 ```
 
-## Security Notes
-
-- Do not log passwords, access tokens, refresh tokens, JWT keys, or connection strings.
-- Keep detailed exceptions in server logs and return safe messages to clients.
-- Use the `traceId` to correlate client errors with server logs.
-- Keep the SQLite database test-only; production continues to use SQL Server.
-- A user must belong to the `Doctor` role before being assigned to an appointment.
-- Test JWT secrets are suitable only for local integration tests and must never be used as production secrets.
+ 
