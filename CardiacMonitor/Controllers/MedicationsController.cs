@@ -35,7 +35,11 @@ public class MedicationsController : ControllerBase
             var patient = await _patientService.GetPatientByIdAsync(patientId);
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own medications.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -52,7 +56,11 @@ public class MedicationsController : ControllerBase
         var created = await _medService.CreateMedicationAsync(patientId, request);
         if (created == null)
         {
-            return NotFound(new { Message = $"Patient with ID {patientId} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {patientId} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -66,7 +74,11 @@ public class MedicationsController : ControllerBase
         var med = await _medService.GetMedicationByIdAsync(id);
         if (med == null)
         {
-            return NotFound(new { Message = $"Medication with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Medication not found.",
+                detail: $"Medication with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
 
         var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -77,7 +89,11 @@ public class MedicationsController : ControllerBase
             var patient = await _patientService.GetPatientByIdAsync(med.PatientId);
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own medications.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -93,7 +109,11 @@ public class MedicationsController : ControllerBase
         var updated = await _medService.UpdateMedicationAsync(id, request);
         if (!updated)
         {
-            return NotFound(new { Message = $"Medication with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Medication not found.",
+                detail: $"Medication with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }
@@ -107,7 +127,11 @@ public class MedicationsController : ControllerBase
         var deleted = await _medService.DeleteMedicationAsync(id);
         if (!deleted)
         {
-            return NotFound(new { Message = $"Medication with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Medication not found.",
+                detail: $"Medication with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }

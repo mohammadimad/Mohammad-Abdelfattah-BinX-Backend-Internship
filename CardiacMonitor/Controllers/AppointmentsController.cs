@@ -35,7 +35,11 @@ public class AppointmentsController : ControllerBase
             var patient = await _patientService.GetPatientByIdAsync(patientId);
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own appointments.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -52,7 +56,11 @@ public class AppointmentsController : ControllerBase
         var created = await _appService.CreateAppointmentAsync(patientId, request);
         if (created == null)
         {
-            return BadRequest(new { Message = "Failed to create appointment. Verify Patient ID and Doctor ID exist." });
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Appointment creation failed.",
+                detail: "Verify that the patient exists and the selected user belongs to the Doctor role.",
+                instance: HttpContext.Request.Path);
         }
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -66,7 +74,11 @@ public class AppointmentsController : ControllerBase
         var app = await _appService.GetAppointmentByIdAsync(id);
         if (app == null)
         {
-            return NotFound(new { Message = $"Appointment with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Appointment not found.",
+                detail: $"Appointment with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
 
         var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -77,7 +89,11 @@ public class AppointmentsController : ControllerBase
             var patient = await _patientService.GetPatientByIdAsync(app.PatientId);
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own appointments.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -93,7 +109,11 @@ public class AppointmentsController : ControllerBase
         var updated = await _appService.UpdateAppointmentAsync(id, request);
         if (!updated)
         {
-            return BadRequest(new { Message = "Failed to update. Ensure Appointment ID and Doctor ID are valid." });
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Appointment update failed.",
+                detail: "Verify that the appointment exists and the selected user belongs to the Doctor role.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }
@@ -107,7 +127,11 @@ public class AppointmentsController : ControllerBase
         var deleted = await _appService.DeleteAppointmentAsync(id);
         if (!deleted)
         {
-            return NotFound(new { Message = $"Appointment with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Appointment not found.",
+                detail: $"Appointment with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }

@@ -39,8 +39,7 @@ public class AppointmentService : IAppointmentService
         var patientExists = await _context.Patients.AnyAsync(p => p.Id == patientId);
         if (!patientExists) return null;
 
-        var doctorExists = await _context.Users.AnyAsync(u => u.Id == request.DoctorId);
-        if (!doctorExists) return null;
+        if (!await IsDoctorAsync(request.DoctorId)) return null;
 
         var appointment = new Appointment
         {
@@ -62,8 +61,7 @@ public class AppointmentService : IAppointmentService
         var app = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
         if (app == null) return false;
 
-        var doctorExists = await _context.Users.AnyAsync(u => u.Id == request.DoctorId);
-        if (!doctorExists) return false;
+        if (!await IsDoctorAsync(request.DoctorId)) return false;
 
         app.DoctorId = request.DoctorId;
         app.AppointmentDate = request.AppointmentDate;
@@ -82,5 +80,15 @@ public class AppointmentService : IAppointmentService
         _context.Appointments.Remove(app);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    // Checks that the selected identity user belongs to the Doctor role.
+    private async Task<bool> IsDoctorAsync(string userId)
+    {
+        return await (
+            from userRole in _context.UserRoles
+            join role in _context.Roles on userRole.RoleId equals role.Id
+            where userRole.UserId == userId && role.NormalizedName == "DOCTOR"
+            select userRole).AnyAsync();
     }
 }

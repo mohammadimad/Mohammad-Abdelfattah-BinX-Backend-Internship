@@ -35,7 +35,11 @@ public class VitalSignsController : ControllerBase
             // Ownership Check: If the user is a patient, they can only access their own vital signs.
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid(); // 403
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own vital signs.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -58,14 +62,22 @@ public class VitalSignsController : ControllerBase
             // Ownership Check: If the user is a patient, they can only create vital signs for themselves.
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can create vital signs only for themselves.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
         var created = await _vitalService.CreateVitalSignAsync(patientId, request);
         if (created == null)
         {
-            return NotFound(new { Message = $"Patient with ID {patientId} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {patientId} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -79,7 +91,11 @@ public class VitalSignsController : ControllerBase
         var vital = await _vitalService.GetVitalSignByIdAsync(id);
         if (vital == null)
         {
-            return NotFound(new { Message = $"Vital Sign with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Vital sign not found.",
+                detail: $"Vital sign with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
 
         var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -90,7 +106,11 @@ public class VitalSignsController : ControllerBase
             var patient = await _patientService.GetPatientByIdAsync(vital.PatientId);
             if (patient == null || patient.UserId != loggedInUserId)
             {
-                return Forbid();
+                return Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Access forbidden.",
+                    detail: "Patients can access only their own vital signs.",
+                    instance: HttpContext.Request.Path);
             }
         }
 
@@ -106,7 +126,11 @@ public class VitalSignsController : ControllerBase
         var updated = await _vitalService.UpdateVitalSignAsync(id, request);
         if (!updated)
         {
-            return NotFound(new { Message = $"Vital Sign with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Vital sign not found.",
+                detail: $"Vital sign with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }
@@ -120,7 +144,11 @@ public class VitalSignsController : ControllerBase
         var deleted = await _vitalService.DeleteVitalSignAsync(id);
         if (!deleted)
         {
-            return NotFound(new { Message = $"Vital Sign with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Vital sign not found.",
+                detail: $"Vital sign with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }

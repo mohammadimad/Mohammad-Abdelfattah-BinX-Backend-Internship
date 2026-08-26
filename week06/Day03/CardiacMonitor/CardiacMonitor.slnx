@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CardiacMonitor.csproj" />
+  <Project Path="CardiacMonitor.Tests/CardiacMonitor.Tests.csproj" />
+</Solution>

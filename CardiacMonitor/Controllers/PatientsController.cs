@@ -36,7 +36,11 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id);
         if (patient == null)
         {
-            return NotFound(new { Message = $"Patient with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
 
         //Ownership Check: If the user is ill, it must be the same patient attempting to access their data.
@@ -47,7 +51,11 @@ public class PatientsController : ControllerBase
         // If the user is sick and tries to read data from another patient other than their own profile -> we will immediately block them with a 403 Forbidden!
         if (isPatient && patient.UserId != loggedInUserId)
         {
-            return Forbid(); 
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "Patients can access only their own profile.",
+                instance: HttpContext.Request.Path);
         }
 
         return Ok(patient);
@@ -71,7 +79,11 @@ public class PatientsController : ControllerBase
         var updated = await _patientService.UpdatePatientAsync(id, request);
         if (!updated)
         {
-            return NotFound(new { Message = $"Patient with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }
@@ -85,7 +97,11 @@ public class PatientsController : ControllerBase
         var deleted = await _patientService.DeletePatientAsync(id);
         if (!deleted)
         {
-            return NotFound(new { Message = $"Patient with ID {id} was not found." });
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
         }
         return NoContent();
     }

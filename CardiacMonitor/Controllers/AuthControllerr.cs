@@ -23,7 +23,11 @@ public class AuthController : ControllerBase
         var result = await _authService.RegisterAsync(request);
         if (!result.IsSuccess)
         {
-            return BadRequest(new { Message = result.Message });
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Registration failed.",
+                detail: result.Message,
+                instance: HttpContext.Request.Path);
         }
         return Ok(new { Message = result.Message });
     }
@@ -36,7 +40,11 @@ public class AuthController : ControllerBase
         var result = await _authService.LoginAsync(request);
         if (!result.IsSuccess)
         {
-            return Unauthorized(new { Message = result.Message });
+            return Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Authentication failed.",
+                detail: result.Message,
+                instance: HttpContext.Request.Path);
         }
 
         return Ok(new
@@ -53,7 +61,11 @@ public class AuthController : ControllerBase
         var result = await _authService.RefreshTokenAsync(request);
         if (!result.IsSuccess)
         {
-            return BadRequest(new { Message = result.Message });
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Token refresh failed.",
+                detail: result.Message,
+                instance: HttpContext.Request.Path);
         }
         return Ok(new { Token = result.Token, RefreshToken = result.RefreshToken, Message = result.Message });
     }

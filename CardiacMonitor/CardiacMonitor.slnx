@@ -1,3 +1,7 @@
 <Solution>
   <Project Path="CardiacMonitor.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/CardiacMonitor.IntegrationTests/CardiacMonitor.IntegrationTests.csproj" />
+    <Project Path="tests/CardiacMonitor.UnitTests/CardiacMonitor.UnitTests.csproj" />
+  </Folder>
 </Solution>

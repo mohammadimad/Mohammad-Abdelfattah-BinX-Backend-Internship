@@ -17,13 +17,20 @@ public class AuthService : IAuthService
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _config;
     private readonly AppDbContext _context; // حقن قاعدة البيانات لحفظ الرموز
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config, AppDbContext context)
+    public AuthService(
+        UserManager<IdentityUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IConfiguration config,
+        AppDbContext context,
+        ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _config = config;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -58,12 +65,16 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
+            _logger.LogWarning("Failed login attempt: user was not found.");
             return new AuthResponse(false, "Invalid email or password.");
         }
 
         var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!isPasswordValid)
         {
+            _logger.LogWarning(
+                "Failed login attempt for user {UserId}: invalid password.",
+                user.Id);
             return new AuthResponse(false, "Invalid email or password.");
         }
 
@@ -128,9 +139,16 @@ public class AuthService : IAuthService
             var user = await _userManager.FindByIdAsync(storedToken.UserId);
             return await GenerateTokenPairAsync(user!);
         }
-        catch (Exception)
+        catch (Exception exception) when (
+            exception is SecurityTokenException
+            or ArgumentException
+            or FormatException)
         {
-            return new AuthResponse(false, "An error occurred while processing your request.");
+            _logger.LogWarning(
+                "Refresh token validation failed with {ExceptionType}.",
+                exception.GetType().Name);
+
+            return new AuthResponse(false, "The token request is invalid.");
         }
     }
 
