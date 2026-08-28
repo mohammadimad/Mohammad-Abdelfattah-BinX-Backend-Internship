@@ -1,5 +1,6 @@
 ﻿using CardiacMonitor.DTOs;
 using CardiacMonitor.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting; 
@@ -18,6 +19,7 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/register
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] DTOs.RegisterRequest request)
     {
         var result = await _authService.RegisterAsync(request);
@@ -34,6 +36,7 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/login
     [HttpPost("login")]
+    [AllowAnonymous]
     [EnableRateLimiting("StrictLoginPolicy")]
     public async Task<IActionResult> Login([FromBody] DTOs.LoginRequest request)
     {
@@ -56,6 +59,7 @@ public class AuthController : ControllerBase
     }
     // POST: api/auth/refresh
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public async Task<IActionResult> RefreshToken([FromBody] TokenRequest request)
     {
         var result = await _authService.RefreshTokenAsync(request);

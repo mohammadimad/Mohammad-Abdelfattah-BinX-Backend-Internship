@@ -1,0 +1,285 @@
+{
+  "info": {
+    "_postman_id": "c4388a48-d664-4c21-a79e-7a32fd33c1d4",
+    "name": "Cardiac Monitor - Sprint 1 Day 5 Demo",
+    "description": "Run the requests from top to bottom. The collection logs in, demonstrates the filtered and paginated patient catalog, creates a stocked medication, creates an order, verifies the stock decrement, and demonstrates the insufficient-stock error path.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01 - Login as seeded doctor",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login returns 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('Access token is returned', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+              "pm.collectionVariables.set('accessToken', body.token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"doctor@cardiac.com\",\n  \"password\": \"Doctor@123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/auth/login",
+        "description": "Uses the development doctor seeded by the EF Core model and stores the returned JWT for the remaining requests."
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Browse filtered, sorted, paginated catalog",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Catalog returns 200', () => pm.response.to.have.status(200));",
+              "const page = pm.response.json();",
+              "pm.test('Response is a one-item DTO page', () => {",
+              "  pm.expect(page.pageNumber).to.eql(1);",
+              "  pm.expect(page.pageSize).to.eql(1);",
+              "  pm.expect(page.items).to.be.an('array').with.lengthOf.at.most(1);",
+              "  if (page.items.length === 1) pm.expect(page.items[0].gender).to.eql('Female');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/patients?pageNumber=1&pageSize=1&searchName=a&gender=Female&sortBy=lastName&isDescending=true",
+        "description": "Demonstrates pagination, two filters (name and gender), descending sorting, and DTO projection."
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Create medication with demo stock",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Medication is created', () => pm.response.to.have.status(201));",
+              "const medication = pm.response.json();",
+              "pm.collectionVariables.set('medicationId', medication.id);",
+              "pm.collectionVariables.set('stockBefore', medication.stockQuantity);",
+              "pm.test('Initial stock is 5', () => pm.expect(medication.stockQuantity).to.eql(5));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sprint Demo Aspirin\",\n  \"dosage\": \"81 mg\",\n  \"frequency\": \"Once daily\",\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": null,\n  \"isActive\": true,\n  \"stockQuantity\": 5,\n  \"unitPrice\": 3.50\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/patients/{{patientId}}/medications",
+        "description": "Creates repeatable demo data and captures the generated medication ID and starting stock."
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Verify stock before order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Medication lookup returns 200', () => pm.response.to.have.status(200));",
+              "const medication = pm.response.json();",
+              "pm.test('Stock matches captured starting value', () => pm.expect(medication.stockQuantity).to.eql(Number(pm.collectionVariables.get('stockBefore'))));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+        "description": "Makes the stock value visible immediately before the transactional write."
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Create order successfully",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Order returns 201', () => pm.response.to.have.status(201));",
+              "const order = pm.response.json();",
+              "pm.test('Server calculates line and order totals', () => {",
+              "  pm.expect(order.totalAmount).to.eql(7);",
+              "  pm.expect(order.items).to.have.lengthOf(1);",
+              "  pm.expect(order.items[0].lineTotal).to.eql(7);",
+              "});",
+              "pm.collectionVariables.set('expectedStockAfter', Number(pm.collectionVariables.get('stockBefore')) - 2);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"medicationId\": {{medicationId}},\n      \"quantity\": 2\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/patients/{{patientId}}/medication-orders",
+        "description": "Exercises stock checking, server-side line totals, order total calculation, persistence, and stock decrement."
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Verify stock decrement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Medication lookup returns 200', () => pm.response.to.have.status(200));",
+              "const medication = pm.response.json();",
+              "pm.test('Stock was decremented by two', () => pm.expect(medication.stockQuantity).to.eql(Number(pm.collectionVariables.get('expectedStockAfter'))));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+        "description": "Provides visible end-to-end evidence that the order changed stock."
+      },
+      "response": []
+    },
+    {
+      "name": "07 - Reject an order with insufficient stock",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Insufficient stock returns 409', () => pm.response.to.have.status(409));",
+              "const error = pm.response.json();",
+              "pm.test('Error explains the stock conflict', () => pm.expect(error.message).to.include('Insufficient stock'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"medicationId\": {{medicationId}},\n      \"quantity\": 999999\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/patients/{{patientId}}/medication-orders",
+        "description": "Demonstrates the business-rule error path and the API's 409 Conflict status code."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7142",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "medicationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stockBefore",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedStockAfter",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

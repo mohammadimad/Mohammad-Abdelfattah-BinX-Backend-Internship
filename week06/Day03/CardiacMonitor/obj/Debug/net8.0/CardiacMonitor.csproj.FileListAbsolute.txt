@@ -975,10 +975,10 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\Cardi
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\staticwebassets.development.json
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\swae.build.ex.cache
-D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\CardiacM.A69A4D2C.Up2Date
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.dll
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\refint\CardiacMonitor.dll
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.pdb
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.genruntimeconfig.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\ref\CardiacMonitor.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day03\CardiacMonitor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
