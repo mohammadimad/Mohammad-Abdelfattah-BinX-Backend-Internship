@@ -301,6 +301,27 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CardiacMonitor.Controllers.MedicationOrdersController",
+    "Method": "Create",
+    "RelativePath": "api/patients/{patientId}/medication-orders",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "patientId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "CardiacMonitor.DTOs.CreateMedicationOrderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CardiacMonitor.Controllers.MedicationsController",
     "Method": "GetPatientMedications",
     "RelativePath": "api/patients/{patientId}/medications",

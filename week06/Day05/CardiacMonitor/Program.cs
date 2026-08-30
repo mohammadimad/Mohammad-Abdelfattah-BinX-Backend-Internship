@@ -89,8 +89,25 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
-});
 
+    // 👇 Add event handlers to capture validation failures
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            // Log the raw Authorization header value
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            logger.LogWarning($"Raw Authorization Header: '{authHeader}'");
+
+            // Log the token extracted by the middleware
+            logger.LogWarning($"Token extracted: '{context.Token}'");
+
+            return Task.CompletedTask;
+        },
+    };
+});
 // Swagger configuration with JWT Bearer support
 builder.Services.AddSwaggerGen(options =>
 {

@@ -1298,3 +1298,4 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day05\Cardi
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day05\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.pdb
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day05\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.genruntimeconfig.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day05\CardiacMonitor\obj\Debug\net8.0\ref\CardiacMonitor.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\week06\Day05\CardiacMonitor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

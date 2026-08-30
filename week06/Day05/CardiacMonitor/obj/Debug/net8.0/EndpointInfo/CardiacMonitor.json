@@ -245,6 +245,48 @@
         }
       }
     },
+    "/api/patients/{patientId}/medication-orders": {
+      "post": {
+        "tags": [
+          "MedicationOrders"
+        ],
+        "parameters": [
+          {
+            "name": "patientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMedicationOrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMedicationOrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMedicationOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/medications": {
       "get": {
         "tags": [
@@ -738,6 +780,33 @@
         },
         "additionalProperties": false
       },
+      "CreateMedicationOrderItemRequest": {
+        "type": "object",
+        "properties": {
+          "medicationId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateMedicationOrderRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMedicationOrderItemRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateMedicationRequest": {
         "type": "object",
         "properties": {
@@ -764,6 +833,14 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "stockQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -910,6 +987,14 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "stockQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
