@@ -17,18 +17,6 @@ erDiagram
         int AccessFailedCount
     }
 
-    AspNetRoles {
-        nvarchar Id PK
-        nvarchar Name
-        nvarchar NormalizedName
-        nvarchar ConcurrencyStamp
-    }
-
-    AspNetUserRoles {
-        nvarchar UserId PK,FK
-        nvarchar RoleId PK,FK
-    }
-
     Patients {
         int Id PK
         nvarchar UserId FK "nullable, unique"
@@ -69,22 +57,8 @@ erDiagram
         nvarchar Notes "nullable"
     }
 
-    RefreshTokens {
-        int Id PK
-        nvarchar UserId FK
-        nvarchar Token
-        nvarchar JwtId
-        bit IsUsed
-        bit IsRevoked
-        datetime2 AddedDate
-        datetime2 ExpiryDate
-    }
-
     AspNetUsers o|--o| Patients : "owns profile (CASCADE)"
-    AspNetUsers ||--o{ RefreshTokens : "has (CASCADE)"
-    AspNetUsers ||--o{ Appointments : "assigned as doctor (RESTRICT)"
-    AspNetUsers ||--o{ AspNetUserRoles : has
-    AspNetRoles ||--o{ AspNetUserRoles : contains
+    AspNetUsers ||--o{ Appointments : "Doctor role (RESTRICT)"
     Patients ||--o{ VitalSigns : "has (CASCADE)"
     Patients ||--o{ Medications : "has (CASCADE)"
     Patients ||--o{ Appointments : "has (CASCADE)"

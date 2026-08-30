@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using CardiacMonitor.Data;
 using CardiacMonitor.DTOs;
 using CardiacMonitor.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
 
@@ -128,6 +130,89 @@ public class ApiEndpointsTests : IClassFixture<CardiacMonitorApiFactory>
             .ReadFromJsonAsync<ValidationProblemDetails>();
         Assert.NotNull(problem);
         Assert.Contains(nameof(CreateVitalSignRequest.HeartRate), problem.Errors.Keys);
+    }
+
+    // Verifies that vital-sign history supports filtering, sorting, and pagination.
+    [Fact]
+    public async Task GetVitalSigns_ReturnsRequestedFilteredPage()
+    {
+        // Arrange
+        using var client = CreateAuthenticatedClient("admin-user", "Admin");
+
+        // Act
+        var response = await client.GetAsync(
+            "/api/patients/1/vitals?page=1&pageSize=1&minHeartRate=80&sort=heartRate_desc");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var page = await response.Content
+            .ReadFromJsonAsync<PagedResult<VitalSignResponse>>();
+        Assert.NotNull(page);
+        Assert.Single(page.Items);
+        Assert.Equal(82, page.Items[0].HeartRate);
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
+    }
+
+    // Verifies that an unsafe page size returns ValidationProblemDetails.
+    [Fact]
+    public async Task GetVitalSigns_ReturnsValidationProblem_WhenPageSizeIsTooLarge()
+    {
+        // Arrange
+        using var client = CreateAuthenticatedClient("admin-user", "Admin");
+
+        // Act
+        var response = await client.GetAsync(
+            "/api/patients/1/vitals?pageSize=101");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content
+            .ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains(nameof(VitalSignQueryParameters.PageSize), problem.Errors.Keys);
+    }
+
+    // Verifies that invalid roles do not leave orphaned identity users.
+    [Fact]
+    public async Task Register_ReturnsBadRequestWithoutCreatingUser_WhenRoleIsInvalid()
+    {
+        // Arrange
+        var email = $"invalid-role-{Guid.NewGuid():N}@test.local";
+        using var client = CreateClient();
+        var request = new RegisterRequest(email, "ValidPassword1!", "UnknownRole");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/auth/register", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await context.Users.AnyAsync(user => user.Email == email));
+    }
+
+    // Verifies that registration commits both the identity user and role membership.
+    [Fact]
+    public async Task Register_CreatesUserAndRole_WhenRequestIsValid()
+    {
+        // Arrange
+        var email = $"registered-{Guid.NewGuid():N}@test.local";
+        using var client = CreateClient();
+        var request = new RegisterRequest(email, "ValidPassword1!", "Patient");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/auth/register", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var user = await context.Users.SingleAsync(entity => entity.Email == email);
+        var patientRole = await context.Roles
+            .SingleAsync(role => role.NormalizedName == "PATIENT");
+        Assert.True(await context.UserRoles.AnyAsync(userRole =>
+            userRole.UserId == user.Id && userRole.RoleId == patientRole.Id));
     }
 
     // Verifies that an administrator cannot be assigned as an appointment doctor.

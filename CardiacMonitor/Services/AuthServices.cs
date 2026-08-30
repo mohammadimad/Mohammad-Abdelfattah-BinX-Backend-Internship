@@ -33,6 +33,7 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
+    // Creates the identity user and role membership in one transaction.
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
         var userExists = await _userManager.FindByEmailAsync(request.Email);
@@ -41,23 +42,44 @@ public class AuthService : IAuthService
             return new AuthResponse(false, "Email already registered.");
         }
 
-        var user = new IdentityUser { UserName = request.Email, Email = request.Email };
-
-        var result = await _userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return new AuthResponse(false, $"Registration failed: {errors}");
-        }
-
         var roleExists = await _roleManager.RoleExistsAsync(request.Role);
         if (!roleExists)
         {
             return new AuthResponse(false, "Specified role does not exist.");
         }
 
-        await _userManager.AddToRoleAsync(user, request.Role);
-        return new AuthResponse(true, "User registered successfully.");
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var user = new IdentityUser
+            {
+                UserName = request.Email,
+                Email = request.Email
+            };
+            var creationResult = await _userManager.CreateAsync(user, request.Password);
+            if (!creationResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                var errors = string.Join(", ", creationResult.Errors.Select(error => error.Description));
+                return new AuthResponse(false, $"Registration failed: {errors}");
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, request.Role);
+            if (!roleResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                var errors = string.Join(", ", roleResult.Errors.Select(error => error.Description));
+                return new AuthResponse(false, $"Role assignment failed: {errors}");
+            }
+
+            await transaction.CommitAsync();
+            return new AuthResponse(true, "User registered successfully.");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -82,7 +104,7 @@ public class AuthService : IAuthService
         return await GenerateTokenPairAsync(user);
     }
 
-    // Method to refresh tokens
+    // Replaces an expired token pair atomically after validating both tokens.
     public async Task<AuthResponse> RefreshTokenAsync(TokenRequest request)
     {
         var jwtTokenHandler = new JwtSecurityTokenHandler();
@@ -131,13 +153,26 @@ public class AuthService : IAuthService
             {
                 return new AuthResponse(false, "Refresh token has expired.");
             }
-           // Mark the old token as "user" and generate a completely new token pair for increased security
-            storedToken.IsUsed = true;
-            _context.RefreshTokens.Update(storedToken);
-            await _context.SaveChangesAsync();
-
             var user = await _userManager.FindByIdAsync(storedToken.UserId);
-            return await GenerateTokenPairAsync(user!);
+            if (user == null)
+            {
+                return new AuthResponse(false, "The refresh token user no longer exists.");
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                storedToken.IsUsed = true;
+                var response = await GenerateTokenPairAsync(user, saveChanges: false);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return response;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
         catch (Exception exception) when (
             exception is SecurityTokenException
@@ -152,8 +187,10 @@ public class AuthService : IAuthService
         }
     }
 
-    //method to generate access and refresh tokens
-    private async Task<AuthResponse> GenerateTokenPairAsync(IdentityUser user)
+    // Generates and optionally persists a new access and refresh token pair.
+    private async Task<AuthResponse> GenerateTokenPairAsync(
+        IdentityUser user,
+        bool saveChanges = true)
     {
         var userRoles = await _userManager.GetRolesAsync(user);
 
@@ -197,7 +234,10 @@ public class AuthService : IAuthService
         };
 
         _context.RefreshTokens.Add(refreshToken);
-        await _context.SaveChangesAsync();
+        if (saveChanges)
+        {
+            await _context.SaveChangesAsync();
+        }
 
         return new AuthResponse(true, "Tokens generated successfully.", jwtToken, refreshToken.Token);
     }

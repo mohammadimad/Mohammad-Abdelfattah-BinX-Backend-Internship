@@ -14,14 +14,60 @@ public class VitalSignService : IVitalSignService
         _context = context;
     }
      
-     public async Task<IEnumerable<VitalSignResponse>> GetVitalSignsByPatientIdAsync(int patientId)
+    // Returns a filtered, sorted, and paginated vital-sign history.
+    public async Task<PagedResult<VitalSignResponse>> GetVitalSignsByPatientIdAsync(
+        int patientId,
+        VitalSignQueryParameters queryParameters)
     {
-        return await _context.VitalSigns
+        var query = _context.VitalSigns
             .AsNoTracking()
-            .Where(v => v.PatientId == patientId)
-            .OrderByDescending(v => v.RecordedAt)
-            .Select(v => new VitalSignResponse(v.Id, v.PatientId, v.HeartRate, v.OxygenSaturation, v.SystolicBP, v.DiastolicBP, v.RecordedAt))
+            .Where(vital => vital.PatientId == patientId);
+
+        if (queryParameters.From.HasValue)
+        {
+            query = query.Where(vital => vital.RecordedAt >= queryParameters.From.Value);
+        }
+
+        if (queryParameters.To.HasValue)
+        {
+            query = query.Where(vital => vital.RecordedAt <= queryParameters.To.Value);
+        }
+
+        if (queryParameters.MinHeartRate.HasValue)
+        {
+            query = query.Where(vital => vital.HeartRate >= queryParameters.MinHeartRate.Value);
+        }
+
+        if (queryParameters.MaxHeartRate.HasValue)
+        {
+            query = query.Where(vital => vital.HeartRate <= queryParameters.MaxHeartRate.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+        var orderedQuery = ApplySorting(query, queryParameters.Sort);
+        var items = await orderedQuery
+            .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize)
+            .Select(vital => new VitalSignResponse(
+                vital.Id,
+                vital.PatientId,
+                vital.HeartRate,
+                vital.OxygenSaturation,
+                vital.SystolicBP,
+                vital.DiastolicBP,
+                vital.RecordedAt))
             .ToListAsync();
+
+        var totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)queryParameters.PageSize);
+
+        return new PagedResult<VitalSignResponse>(
+            items,
+            queryParameters.Page,
+            queryParameters.PageSize,
+            totalCount,
+            totalPages);
     }
 
     public async Task<VitalSignResponse?> GetVitalSignByIdAsync(int id)
@@ -78,5 +124,27 @@ public class VitalSignService : IVitalSignService
         _context.VitalSigns.Remove(vital);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    // Applies a supported deterministic sort order to a vital-sign query.
+    private static IOrderedQueryable<VitalSign> ApplySorting(
+        IQueryable<VitalSign> query,
+        string sort)
+    {
+        return sort.ToLowerInvariant() switch
+        {
+            "recordedat_asc" => query
+                .OrderBy(vital => vital.RecordedAt)
+                .ThenBy(vital => vital.Id),
+            "heartrate_asc" => query
+                .OrderBy(vital => vital.HeartRate)
+                .ThenBy(vital => vital.Id),
+            "heartrate_desc" => query
+                .OrderByDescending(vital => vital.HeartRate)
+                .ThenBy(vital => vital.Id),
+            _ => query
+                .OrderByDescending(vital => vital.RecordedAt)
+                .ThenByDescending(vital => vital.Id)
+        };
     }
 }

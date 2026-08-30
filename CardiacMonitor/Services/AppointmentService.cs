@@ -40,6 +40,9 @@ public class AppointmentService : IAppointmentService
         if (!patientExists) return null;
 
         if (!await IsDoctorAsync(request.DoctorId)) return null;
+        if (await HasSchedulingConflictAsync(
+            request.DoctorId,
+            request.AppointmentDate)) return null;
 
         var appointment = new Appointment
         {
@@ -62,6 +65,10 @@ public class AppointmentService : IAppointmentService
         if (app == null) return false;
 
         if (!await IsDoctorAsync(request.DoctorId)) return false;
+        if (await HasSchedulingConflictAsync(
+            request.DoctorId,
+            request.AppointmentDate,
+            id)) return false;
 
         app.DoctorId = request.DoctorId;
         app.AppointmentDate = request.AppointmentDate;
@@ -90,5 +97,18 @@ public class AppointmentService : IAppointmentService
             join role in _context.Roles on userRole.RoleId equals role.Id
             where userRole.UserId == userId && role.NormalizedName == "DOCTOR"
             select userRole).AnyAsync();
+    }
+
+    // Checks whether the doctor already has an appointment at the requested time.
+    private async Task<bool> HasSchedulingConflictAsync(
+        string doctorId,
+        DateTime appointmentDate,
+        int? excludedAppointmentId = null)
+    {
+        return await _context.Appointments.AnyAsync(appointment =>
+            appointment.DoctorId == doctorId &&
+            appointment.AppointmentDate == appointmentDate &&
+            (!excludedAppointmentId.HasValue ||
+             appointment.Id != excludedAppointmentId.Value));
     }
 }

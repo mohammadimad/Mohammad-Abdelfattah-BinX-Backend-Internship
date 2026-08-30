@@ -196,10 +196,44 @@
       "name": "Vital Signs",
       "item": [
         {
-          "name": "ET Get Patient Vital Signs",
+          "name": "GET Paginated and Filtered Patient Vital Signs",
           "request": {
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/1/vitals?page=1&pageSize=20&minHeartRate=60&maxHeartRate=120&sort=recordedAt_desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "1",
+                "vitals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "minHeartRate",
+                  "value": "60"
+                },
+                {
+                  "key": "maxHeartRate",
+                  "value": "120"
+                },
+                {
+                  "key": "sort",
+                  "value": "recordedAt_desc"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -635,8 +669,25 @@
     }
   ],
   "auth": {
-    "type": "bearer"
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7142"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
   "event": [
     {
       "listen": "prerequest",

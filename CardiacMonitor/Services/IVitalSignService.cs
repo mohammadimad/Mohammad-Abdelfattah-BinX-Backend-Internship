@@ -4,7 +4,9 @@ namespace CardiacMonitor.Services
 {
     public interface IVitalSignService
     {
-        Task<IEnumerable<VitalSignResponse>> GetVitalSignsByPatientIdAsync(int patientId);
+        Task<PagedResult<VitalSignResponse>> GetVitalSignsByPatientIdAsync(
+            int patientId,
+            VitalSignQueryParameters queryParameters);
         Task<VitalSignResponse?> GetVitalSignByIdAsync(int id);
         Task<VitalSignResponse?> CreateVitalSignAsync(int patientId, CreateVitalSignRequest request);
         Task<bool> UpdateVitalSignAsync(int id, UpdateVitalSignRequest request);

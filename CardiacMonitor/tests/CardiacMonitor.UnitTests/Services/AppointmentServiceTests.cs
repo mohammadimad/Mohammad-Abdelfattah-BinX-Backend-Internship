@@ -82,6 +82,57 @@ public class AppointmentServiceTests
         Assert.Single(context.Appointments);
     }
 
+    // Verifies that a doctor cannot be booked twice at the same time.
+    [Fact]
+    public async Task CreateAppointmentAsync_ReturnsNull_WhenDoctorHasTimeConflict()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var appointmentDate = DateTime.UtcNow.AddDays(2);
+        var doctorRole = new IdentityRole
+        {
+            Id = "doctor-role",
+            Name = "Doctor",
+            NormalizedName = "DOCTOR"
+        };
+        var doctor = new IdentityUser
+        {
+            Id = "doctor-user",
+            UserName = "doctor@example.com"
+        };
+
+        context.Patients.Add(CreatePatient());
+        context.Roles.Add(doctorRole);
+        context.Users.Add(doctor);
+        context.UserRoles.Add(new IdentityUserRole<string>
+        {
+            UserId = doctor.Id,
+            RoleId = doctorRole.Id
+        });
+        context.Appointments.Add(new Appointment
+        {
+            PatientId = 1,
+            DoctorId = doctor.Id,
+            AppointmentDate = appointmentDate,
+            Status = "Scheduled"
+        });
+        await context.SaveChangesAsync();
+
+        var service = new AppointmentService(context);
+        var request = new CreateAppointmentRequest(
+            doctor.Id,
+            appointmentDate,
+            "Scheduled",
+            null);
+
+        // Act
+        var result = await service.CreateAppointmentAsync(1, request);
+
+        // Assert
+        Assert.Null(result);
+        Assert.Single(context.Appointments);
+    }
+
     // Creates an isolated in-memory database context for each unit test.
     private static AppDbContext CreateContext()
     {

@@ -24,7 +24,9 @@ public class VitalSignsController : ControllerBase
     //Patient can only access their own vital signs, while Admins and Doctors can access any patient's vital signs.
     [HttpGet("api/patients/{patientId}/vitals")]
     [Authorize] 
-    public async Task<IActionResult> GetPatientVitals(int patientId)
+    public async Task<IActionResult> GetPatientVitals(
+        int patientId,
+        [FromQuery] VitalSignQueryParameters queryParameters)
     {
         var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var isPatient = User.IsInRole("Patient");
@@ -43,7 +45,9 @@ public class VitalSignsController : ControllerBase
             }
         }
 
-        var vitals = await _vitalService.GetVitalSignsByPatientIdAsync(patientId);
+        var vitals = await _vitalService.GetVitalSignsByPatientIdAsync(
+            patientId,
+            queryParameters);
         return Ok(vitals);
     }
 
