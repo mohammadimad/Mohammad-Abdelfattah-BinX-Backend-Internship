@@ -22,9 +22,9 @@ public class PatientsController : ControllerBase
     // accessible only to Admins and Doctors to retrieve all patients
     [HttpGet]
     [Authorize(Roles = "Admin,Doctor")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PatientQueryParameters queryParameters)
     {
-        var patients = await _patientService.GetAllPatientsAsync();
+        var patients = await _patientService.GetAllPatientsAsync(queryParameters);
         return Ok(patients);
     }
 

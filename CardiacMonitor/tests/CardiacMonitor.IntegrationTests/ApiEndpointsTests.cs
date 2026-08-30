@@ -66,9 +66,51 @@ public class ApiEndpointsTests : IClassFixture<CardiacMonitorApiFactory>
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var patients = await response.Content.ReadFromJsonAsync<List<PatientResponse>>();
-        Assert.NotNull(patients);
-        Assert.NotEmpty(patients);
+        var page = await response.Content
+            .ReadFromJsonAsync<PagedResult<PatientResponse>>();
+        Assert.NotNull(page);
+        Assert.NotEmpty(page.Items);
+    }
+
+    // Verifies that the patient list supports search, gender filtering, sorting, and pagination.
+    [Fact]
+    public async Task GetPatients_ReturnsRequestedFilteredPage()
+    {
+        // Arrange
+        using var client = CreateAuthenticatedClient("admin-user", "Admin");
+
+        // Act
+        var response = await client.GetAsync(
+            "/api/patients?page=1&pageSize=1&search=Sara&gender=female&sort=lastName_asc");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var page = await response.Content
+            .ReadFromJsonAsync<PagedResult<PatientResponse>>();
+        Assert.NotNull(page);
+        Assert.Single(page.Items);
+        Assert.Equal("Sara", page.Items[0].FirstName);
+        Assert.Equal("Female", page.Items[0].Gender);
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
+    }
+
+    // Verifies that an unsafe patient page size returns ValidationProblemDetails.
+    [Fact]
+    public async Task GetPatients_ReturnsValidationProblem_WhenPageSizeIsTooLarge()
+    {
+        // Arrange
+        using var client = CreateAuthenticatedClient("admin-user", "Admin");
+
+        // Act
+        var response = await client.GetAsync("/api/patients?pageSize=101");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content
+            .ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains(nameof(PatientQueryParameters.PageSize), problem.Errors.Keys);
     }
 
     // Verifies that a missing patient returns a standardized not-found response.
@@ -246,7 +288,8 @@ public class ApiEndpointsTests : IClassFixture<CardiacMonitorApiFactory>
         const string sensitiveMessage = "Sensitive database details";
         var patientService = new Mock<IPatientService>();
         patientService
-            .Setup(service => service.GetAllPatientsAsync())
+            .Setup(service => service.GetAllPatientsAsync(
+                It.IsAny<PatientQueryParameters>()))
             .ThrowsAsync(new InvalidOperationException(sensitiveMessage));
 
         using var throwingFactory = _factory.WithWebHostBuilder(builder =>

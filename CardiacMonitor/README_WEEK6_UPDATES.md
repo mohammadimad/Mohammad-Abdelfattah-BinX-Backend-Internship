@@ -10,6 +10,7 @@ The update follows the Week 6 topics: explicit EF Core modeling, deterministic s
 - Replaced changing seed values with deterministic values.
 - Added database length limits, check constraints, and optimized indexes.
 - Added the `Week6DataModelImprovements` migration.
+- Added pagination, name search, gender filtering, and sorting to the patient list.
 - Added pagination, filtering, and sorting to patient vital-sign history.
 - Added a reusable `PagedResult<T>` response contract.
 - Made user registration atomic with a database transaction.
@@ -34,15 +35,19 @@ Data/
    `- *_Week6DataModelImprovements.cs
 
 DTOs/
+|- PatientDtos.cs
 `- VitalSignDtos.cs
 
 Services/
 |- AuthServices.cs
 |- AppointmentService.cs
+|- IPatientService.cs
+|- PatientService.cs
 |- IVitalSignService.cs
 `- VitalSignService.cs
 
 Validators/
+|- PatientQueryParametersValidator.cs
 `- VitalSignQueryParametersValidator.cs
 
 tests/
@@ -137,6 +142,8 @@ Week6DataModelImprovements
 
 It creates the `RefreshTokens` table because the previous migration named `AddRefreshTokenTable` did not contain the table-creation operation in its generated `Up` method.
 
+The patient-list query update described below changes only application code and does not require another database migration or any manual change to existing patient IDs.
+
 ## Paginated Vital-Sign History
 
 The endpoint remains:
@@ -209,7 +216,103 @@ var items = await orderedQuery
 
 This endpoint previously returned a JSON array. It now returns a paginated object containing `items` and page metadata. Any frontend consuming the endpoint must read `response.items` instead of treating the response itself as the array.
 
+## Paginated and Searchable Patient List
+
+The patient-list endpoint remains:
+
+```http
+GET /api/patients
+```
+
+It is still restricted to users in the `Admin` or `Doctor` role, but it now accepts these optional query parameters:
+
+| Parameter | Default | Description |
+| --- | ---: | --- |
+| `page` | 1 | Requested page number. |
+| `pageSize` | 20 | Items per page; allowed range is 1-100. |
+| `search` | null | Case-insensitive search in first name, last name, or full name. |
+| `gender` | null | Exact case-insensitive filter: `Male` or `Female`. |
+| `sort` | `firstName_asc` | Requested supported sorting mode. |
+
+Supported sort values:
+
+- `firstName_asc`
+- `firstName_desc`
+- `lastName_asc`
+- `lastName_desc`
+- `dateOfBirth_asc`
+- `dateOfBirth_desc`
+
+Example:
+
+```http
+GET /api/patients?page=1&pageSize=20&search=Sara&gender=Female&sort=lastName_asc
+Authorization: Bearer ACCESS_TOKEN
+```
+
+The controller receives the query values as one strongly typed request model:
+
+```csharp
+[HttpGet]
+[Authorize(Roles = "Admin,Doctor")]
+public async Task<IActionResult> GetAll(
+    [FromQuery] PatientQueryParameters queryParameters)
+{
+    var patients = await _patientService
+        .GetAllPatientsAsync(queryParameters);
+    return Ok(patients);
+}
+```
+
+The service builds one `IQueryable<Patient>`, applies the optional name and gender filters, counts the filtered rows, and only then reads the requested page:
+
+```csharp
+var totalCount = await query.CountAsync();
+var orderedQuery = ApplySorting(query, queryParameters.Sort);
+var items = await orderedQuery
+    .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+    .Take(queryParameters.PageSize)
+    .Select(patient => new PatientResponse(/* selected fields */))
+    .ToListAsync();
+```
+
+The ordering always includes the patient ID as a tie-breaker. This deterministic ordering prevents a patient from unexpectedly moving between pages when two records have the same selected sort value.
+
+### Patient-list response contract
+
+```json
+{
+  "items": [
+    {
+      "id": 2,
+      "userId": null,
+      "firstName": "Sara",
+      "lastName": "Ali",
+      "dateOfBirth": "1985-10-22T00:00:00",
+      "gender": "Female",
+      "contactNumber": "+970988271"
+    }
+  ],
+  "page": 1,
+  "pageSize": 20,
+  "totalCount": 1,
+  "totalPages": 1
+}
+```
+
+### Patient-list breaking API contract change
+
+`GET /api/patients` previously returned a JSON array. It now returns `PagedResult<PatientResponse>`. A frontend must therefore read `response.items`, and it can use `totalCount` and `totalPages` to render page controls.
+
 ## Query Validation
+
+`PatientQueryParametersValidator` rejects:
+
+- Page numbers below 1.
+- Page sizes outside 1-100.
+- Search text longer than 100 characters.
+- Gender values other than `Male` or `Female`.
+- Unknown patient sort values.
 
 `VitalSignQueryParametersValidator` rejects:
 
@@ -279,12 +382,14 @@ This uses two layers:
 
 The updated test suite contains:
 
-- 20 unit tests.
-- 11 integration tests.
-- 31 total passing tests.
+- 24 unit tests.
+- 13 integration tests.
+- 37 total passing tests.
 
 New coverage includes:
 
+- Patient name search, gender filtering, deterministic sorting, and pagination.
+- Patient query validation and HTTP validation responses.
 - Vital-sign pagination, filtering, and sorting.
 - Query-parameter validation.
 - Invalid-role registration without an orphan user.
@@ -313,7 +418,12 @@ Set the collection variables:
 - `baseUrl`: `https://localhost:7142`
 - `accessToken`: the JWT returned by login
 
-Run `GET Paginated and Filtered Patient Vital Signs` and change its query parameters live to demonstrate pagination, filtering, and sorting.
+The collection now includes these demonstration requests:
+
+- `GET Paginated and Filtered Patients`
+- `GET Paginated and Filtered Patient Vital Signs`
+
+Run the patient request first. Change `search`, `gender`, `sort`, `page`, and `pageSize` live to demonstrate how the same endpoint returns a focused page without editing database rows or relying on fixed IDs.
 
 ## ERD
 
@@ -330,8 +440,15 @@ Every newly introduced method includes a short English `//` comment immediately 
 private static IOrderedQueryable<VitalSign> ApplySorting(...)
 ```
 
+The same convention is used by the new patient query code:
+
+```csharp
+// Applies a supported deterministic sort order to a patient query.
+private static IOrderedQueryable<Patient> ApplySorting(...)
+```
+
 The comments state responsibility without repeating the implementation line by line.
 
 ## Final Result
 
-The API now meets the main Week 6 technical outcomes: explicit and reviewable database configuration, stable migrations, indexed and constrained data, a paginated and filterable read route, real transaction boundaries, updated tests, and demo-ready documentation.
+The API now meets the main Week 6 technical outcomes: explicit and reviewable database configuration, stable migrations, indexed and constrained data, paginated and filterable patient and vital-sign read routes, real transaction boundaries, updated tests, and demo-ready documentation.

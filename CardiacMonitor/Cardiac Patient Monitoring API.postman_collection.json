@@ -10,10 +10,42 @@
       "name": "Patients",
       "item": [
         {
-          "name": "GET List All Patients",
+          "name": "GET Paginated and Filtered Patients",
           "request": {
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients?page=1&pageSize=20&search=Sara&gender=Female&sort=lastName_asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "Sara"
+                },
+                {
+                  "key": "gender",
+                  "value": "Female"
+                },
+                {
+                  "key": "sort",
+                  "value": "lastName_asc"
+                }
+              ]
+            }
           },
           "response": []
         },

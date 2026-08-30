@@ -27,4 +27,12 @@
            string Gender,
            string ContactNumber
           );
+
+        public sealed record PatientQueryParameters(
+            int Page = 1,
+            int PageSize = 20,
+            string? Search = null,
+            string? Gender = null,
+            string Sort = "firstName_asc"
+        );
 }
