@@ -1,184 +1,148 @@
-# Day 4 - Write Operations, Business Logic, and Code Review
+# Week 6 - Day 4
 
-## Objective
+## Implementing Core Routes II: Write Operations & Business Logic
 
-Day 4 extends the Cardiac Monitor API with a medication refill order workflow that contains real business logic rather than simple CRUD. A valid order must check medication availability, calculate immutable price totals, persist the order and its items, and decrement stock as one atomic operation.
+> Building a transactional medication order workflow with stock validation and calculated totals.
 
-## Requirement mapping
+## Overview
 
-| Curriculum requirement | Project implementation |
-| --- | --- |
-| Check stock before creating an order | `MedicationOrderService` rejects any item whose requested quantity exceeds the available stock |
-| Reject invalid medication requests | Missing medications return `404 Not Found`; inactive or insufficiently stocked medications return `409 Conflict` |
-| Calculate line totals | Each line stores `UnitPrice` and `LineTotal = UnitPrice * Quantity` |
-| Calculate the order total | `MedicationOrder.TotalAmount` is accumulated from all line totals |
-| Decrement stock | Each medication's `StockQuantity` is reduced only after every requested item passes validation |
-| Use one database transaction | Relational providers use an EF Core transaction with `IsolationLevel.Serializable` |
-| Cover success and failure paths | `MedicationOrderServiceTests` verifies successful persistence and insufficient-stock rejection |
+On Day 4, we focused on implementing a medication refill order endpoint that performs real business logic instead of a simple database insert. The workflow validates the patient and requested medications, checks medication activity and stock availability, calculates line and order totals, and updates inventory.
 
-## Added domain model
+The complete operation is handled through a dedicated service and saved within one transaction. This ensures that an order and its stock changes either succeed together or leave the database unchanged when a failure occurs.
 
-### Medication changes
+---
 
-The existing `Medication` entity now includes:
+## Learning Outcomes
 
-- `StockQuantity`: current available units.
-- `UnitPrice`: price captured when an order is created.
-- `OrderItems`: navigation collection for historical order lines.
+During this task, we learned how to:
 
-### MedicationOrder
+- Keep business logic inside a service instead of placing it in the controller.
+- Validate business rules before modifying tracked entities.
+- Use EF Core transactions to keep related write operations atomic.
+- Calculate and preserve monetary values using `decimal` price snapshots.
+- Map business outcomes to appropriate HTTP status codes.
+- Test both successful writes and rejected operations.
 
-Represents the order header:
+---
 
-| Property | Purpose |
-| --- | --- |
-| `Id` | Primary key |
-| `PatientId` | Patient who owns the order |
-| `OrderedAt` | UTC creation time |
-| `TotalAmount` | Sum of all line totals |
-| `Items` | Collection of order lines |
+## Tasks Completed
 
-### MedicationOrderItem
+### 1. Medication Order Endpoint
 
-Represents one requested medication:
+We added a protected endpoint that allows doctors and administrators to create medication orders for a specific patient.
 
-| Property | Purpose |
-| --- | --- |
-| `MedicationOrderId` | Parent order foreign key |
-| `MedicationId` | Ordered medication foreign key |
-| `Quantity` | Requested quantity |
-| `UnitPrice` | Price snapshot at order time |
-| `LineTotal` | `UnitPrice * Quantity` |
-
-Saving `UnitPrice` on the order item is intentional. A future change to the medication's current price must not rewrite the financial history of an existing order.
-
-## API endpoint
-
-```http
-POST /api/patients/{patientId}/medication-orders
-Authorization: Bearer <doctor-or-admin-token>
-Content-Type: application/json
+```csharp
+[HttpPost("api/patients/{patientId}/medication-orders")]
+[Authorize(Roles = "Admin,Doctor")]
+public async Task<IActionResult> Create(
+    int patientId,
+    [FromBody] CreateMedicationOrderRequest request,
+    CancellationToken cancellationToken)
 ```
 
-Only users in the `Admin` or `Doctor` role can create an order.
+The controller converts service results into clear API responses, including `201 Created`, `404 Not Found`, and `409 Conflict`.
 
-Example request:
+### 2. Request and Business Validation
 
-```json
+FluentValidation rejects empty orders, duplicate medications, invalid IDs, and non-positive quantities before the service starts processing the request.
+
+```csharp
+RuleFor(x => x.Items)
+    .NotEmpty().WithMessage("At least one medication item is required.")
+    .Must(items => items is null ||
+        items.Select(item => item.MedicationId).Distinct().Count() == items.Count)
+    .WithMessage("Each medication can appear only once in an order.");
+```
+
+The service then verifies that the patient exists and that every requested medication belongs to that patient, is active, and has enough stock.
+
+```csharp
+foreach (var requestedItem in request.Items)
 {
-  "items": [
+    var medication = medications[requestedItem.MedicationId];
+    if (medication.StockQuantity < requestedItem.Quantity)
     {
-      "medicationId": 1,
-      "quantity": 2
-    },
-    {
-      "medicationId": 2,
-      "quantity": 1
+        return new(
+            CreateMedicationOrderStatus.InsufficientStock,
+            Message: $"Insufficient stock for '{medication.Name}'. Available quantity: {medication.StockQuantity}.");
     }
-  ]
 }
 ```
 
-Example success response:
+### 3. Price and Order Total Calculation
 
-```http
-HTTP/1.1 201 Created
+Each order item stores the medication price at the time of purchase. This keeps historical orders accurate even if the medication price changes later.
+
+```csharp
+var lineTotal = medication.UnitPrice * requestedItem.Quantity;
+
+order.Items.Add(new MedicationOrderItem
+{
+    MedicationId = medication.Id,
+    Quantity = requestedItem.Quantity,
+    UnitPrice = medication.UnitPrice,
+    LineTotal = lineTotal
+});
+
+order.TotalAmount += lineTotal;
 ```
 
-```json
+### 4. Atomic Stock Update with Transactions
+
+The order creation and stock decrement are performed as one atomic operation. Relational database providers use a serializable transaction to protect the stock check and update from competing requests.
+
+```csharp
+if (_context.Database.IsRelational())
 {
-  "id": 15,
-  "patientId": 1,
-  "orderedAt": "2026-08-28T09:30:00Z",
-  "totalAmount": 12.00,
-  "items": [
-    {
-      "medicationId": 1,
-      "medicationName": "Aspirin",
-      "quantity": 2,
-      "unitPrice": 2.50,
-      "lineTotal": 5.00
-    },
-    {
-      "medicationId": 2,
-      "medicationName": "Statin",
-      "quantity": 1,
-      "unitPrice": 7.00,
-      "lineTotal": 7.00
-    }
-  ]
+    transaction = await _context.Database.BeginTransactionAsync(
+        IsolationLevel.Serializable,
+        cancellationToken);
+}
+
+medication.StockQuantity -= requestedItem.Quantity;
+
+_context.MedicationOrders.Add(order);
+await _context.SaveChangesAsync(cancellationToken);
+
+if (transaction is not null)
+{
+    await transaction.CommitAsync(cancellationToken);
 }
 ```
 
-## Response behavior
+If an exception occurs, the transaction is rolled back so that partial order data or incorrect stock values are not persisted.
 
-| Situation | Status code | Database effect |
-| --- | ---: | --- |
-| Valid order | `201 Created` | Order and items are inserted; stock is decremented |
-| Patient does not exist | `404 Not Found` | No changes |
-| Medication does not exist or belongs to another patient | `404 Not Found` | No changes |
-| Medication is inactive | `409 Conflict` | No changes |
-| Stock is insufficient | `409 Conflict` | No changes |
-| Request has no items, duplicates, or non-positive values | `400 Bad Request` | FluentValidation rejects the request before the service runs |
-| Unexpected failure | `500 Internal Server Error` | The transaction is rolled back and middleware returns safe `ProblemDetails` |
+### 5. Automated Service Tests
 
-## Transaction boundary
+We added tests for the main success and failure paths. The successful test confirms total calculations, order persistence, and stock reduction, while the insufficient-stock test confirms that the database remains unchanged.
 
-`MedicationOrderService.CreateOrderAsync` performs the complete write flow inside one transaction when the configured provider is relational:
-
-1. Begin a serializable transaction.
-2. Confirm that the patient exists.
-3. Load all requested medications owned by that patient.
-4. Reject missing, inactive, or insufficiently stocked items.
-5. Create the order and calculate every total.
-6. Decrement medication stock.
-7. Save all changes once.
-8. Commit on success or roll back after an exception.
-
-Serializable isolation protects the stock check and update from competing orders that attempt to buy the last available units. The EF Core InMemory provider does not support relational transactions, so automated unit tests exercise the same service without opening a transaction; the SQL Server path uses the real transaction.
-
-## Database migration
-
-The migration `20260828115119_AddMedicationOrders` adds:
-
-- `StockQuantity` and `UnitPrice` to `Medications`.
-- `MedicationOrders` and `MedicationOrderItems`.
-- Foreign-key indexes and delete behaviors.
-- Decimal precision for monetary values.
-- `CK_Medications_StockQuantity`, preventing negative stock at the database level.
-
-Apply the migration from the project directory:
-
-```powershell
-dotnet ef database update
+```csharp
+Assert.Equal(CreateMedicationOrderStatus.Created, result.Status);
+Assert.Equal(12.00m, result.Order!.TotalAmount);
+Assert.Equal(8, (await context.Medications.FindAsync(1))!.StockQuantity);
+Assert.Single(context.MedicationOrders);
+Assert.Equal(2, context.MedicationOrderItems.Count());
 ```
 
-## Automated tests
+---
 
-The relevant test class is `CardiacMonitor.Tests/MedicationOrderServiceTests.cs`.
+## Related Files
 
-It verifies:
+- `Models/Medication.cs`
+- `Models/MedicationOrder.cs`
+- `Models/MedicationOrderItem.cs`
+- `DTOs/MedicationOrderDtos.cs`
+- `Validators/CreateMedicationOrderRequestValidator.cs`
+- `Services/IMedicationOrderService.cs`
+- `Services/MedicationOrderService.cs`
+- `Controllers/MedicationOrdersController.cs`
+- `CardiacMonitor.Tests/MedicationOrderServiceTests.cs`
+- `Data/Migrations/20260828115119_AddMedicationOrders.cs`
 
-- A valid multi-item order calculates totals, persists its rows, and decrements stock.
-- An insufficient-stock order leaves medications, orders, and order items unchanged.
+---
 
-Run the full solution tests:
+## Final Result
 
-```powershell
-dotnet test .\CardiacMonitor.slnx --configuration Release
-```
+The API now supports a complete medication refill order workflow with authorization, request validation, stock checks, price calculations, inventory updates, and automated tests. The controller remains focused on HTTP concerns while the service owns the business rules and transaction boundary.
 
-## Code-review checklist
-
-- [x] Business logic is placed in a service rather than the controller.
-- [x] Request and response DTOs define the public API contract.
-- [x] The stock check runs before any entity is modified.
-- [x] Monetary values use `decimal` with database precision.
-- [x] The relational write flow has one transaction boundary.
-- [x] Expected business failures use explicit HTTP status codes.
-- [x] Happy-path and insufficient-stock tests pass locally.
-- [ ] Pull request reviewed and approved by the mentor.
-- [ ] SQL Server concurrency behavior demonstrated with competing last-unit orders.
-
-The unchecked items require external review or a real relational concurrency run and must not be reported as completed before evidence exists.
-
+> This implementation provides a reliable write flow in which the order, its items, and medication stock remain consistent as one unit of work.
