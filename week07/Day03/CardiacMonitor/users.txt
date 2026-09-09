@@ -1,0 +1,22 @@
+{
+  "email": "Wasef@cardiac.com",
+  "password": "Doctor@1234",
+  "role": "admin"
+}
+{
+  "email": "sfwafw@gmaile.com",
+  "password": "Awqwe132@",
+  "role": "admin"
+}
+
+{
+  "email": "wasef",
+  "password": "Wasef12$",
+  "role": "Patient"
+}
+
+{
+  "email": "imad@gmail.com",
+  "password": "Wasef12$22",
+  "Role": "patient"
+}

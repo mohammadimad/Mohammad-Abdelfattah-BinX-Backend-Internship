@@ -1,0 +1,23 @@
+@CardiacMonitor_HostAddress = http://localhost:5142
+
+GET {{CardiacMonitor_HostAddress}}/api/diagnostics/unhandled-error
+Accept: application/json
+
+###
+
+@accessToken = paste-admin-or-doctor-token-here
+
+POST {{CardiacMonitor_HostAddress}}/api/patients/1/medication-orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "medicationId": 1,
+      "quantity": 2
+    }
+  ]
+}
+
+###

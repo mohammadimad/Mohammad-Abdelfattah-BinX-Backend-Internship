@@ -1,0 +1,193 @@
+using CardiacMonitor.Data;
+using CardiacMonitor.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting; // استيراد حزمة الـ Rate Limiting
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
+using System.Threading.RateLimiting;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using CardiacMonitor.Validators;
+using CardiacMonitor.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// CORS configuration to allow only the frontend application to access the API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontendOnly", policy =>
+    {
+        policy.WithOrigins("http://localhost:5142")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+//Rate Limiting configuration
+builder.Services.AddRateLimiter(options =>
+{
+    
+    options.AddFixedWindowLimiter("GeneralPolicy", opt =>
+    {
+        opt.PermitLimit = 30;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 2;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    
+    options.AddFixedWindowLimiter("StrictLoginPolicy", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0; 
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many requests.",
+            Detail = "The request rate limit has been exceeded. Try again later.",
+            Instance = context.HttpContext.Request.Path
+        };
+
+        problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+        context.HttpContext.Response.ContentType = "application/problem+json";
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json",
+            cancellationToken: cancellationToken);
+    };
+});
+
+//HSTS (HTTP Strict Transport Security) configuration
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
+// Database configuration
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CardiacMonitorConnection")));
+
+// Identity configuration
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// Authentication configuration
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
+
+// Swagger configuration with JWT Bearer support
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "CardiacMonitor API", Version = "v1" });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid JWT Token."
+    });
+
+    options.OperationFilter<AuthorizeOperationFilter>();
+});
+
+// Dependency Injection for services
+builder.Services.AddScoped<IPatientService, PatientService>();
+builder.Services.AddScoped<IVitalSignService, VitalSignService>();
+builder.Services.AddScoped<IMedicationService, MedicationService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<ICareAssignmentService, CareAssignmentService>();
+builder.Services.AddScoped<IPatientAccessService, PatientAccessService>();
+builder.Services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
+builder.Services.AddScoped<IMedicalAlertService, MedicalAlertService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler,
+    ProblemDetailsAuthorizationMiddlewareResultHandler>();
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+//Validation configuration using FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePatientRequestValidator>();
+
+builder.Services.AddEndpointsApiExplorer();
+
+var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseMiddleware<RequestCorrelationMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// 🛡️ تفعيل الـ HSTS فقط في غير بيئة التطوير (Production) لحماية المتصفحات
+//HSTS (HTTP Strict Transport Security)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// HTTP to HTTPS redirection
+app.UseHttpsRedirection();
+
+//CORS Middleware
+
+app.UseCors("AllowFrontendOnly");
+
+//Rate Limiting Middleware
+app.UseRateLimiter();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+public partial class Program;
