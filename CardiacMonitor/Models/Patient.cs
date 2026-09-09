@@ -11,5 +11,9 @@
         public string ContactNumber { get; set; } = string.Empty;
 
         public ICollection<VitalSign> VitalSigns { get; set; } = new List<VitalSign>();
+        public ICollection<PatientCareAssignment> CareAssignments { get; set; } =
+            new List<PatientCareAssignment>();
+        public ICollection<MedicalAlert> MedicalAlerts { get; set; } =
+            new List<MedicalAlert>();
     }
 }

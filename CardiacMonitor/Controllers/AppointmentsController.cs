@@ -13,34 +13,29 @@ namespace CardiacMonitor.Controllers;
 public class AppointmentsController : ControllerBase
 {
     private readonly IAppointmentService _appService;
-    private readonly IPatientService _patientService;
+    private readonly IPatientAccessService _patientAccessService;
 
-    public AppointmentsController(IAppointmentService appService, IPatientService patientService)
+    public AppointmentsController(
+        IAppointmentService appService,
+        IPatientAccessService patientAccessService)
     {
         _appService = appService;
-        _patientService = patientService;
+        _patientAccessService = patientAccessService;
     }
 
     // 1. GET: api/patients/{patientId}/appointments
     // This endpoint retrieves all appointments for a specific patient. Patients can only access their own appointments, while Admins and Doctors can access any patient's appointments.
     [HttpGet("api/patients/{patientId}/appointments")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetPatientAppointments(int patientId)
     {
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, patientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(patientId);
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own appointments.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's appointments.",
+                instance: HttpContext.Request.Path);
         }
 
         var apps = await _appService.GetAppointmentsByPatientIdAsync(patientId);
@@ -59,7 +54,7 @@ public class AppointmentsController : ControllerBase
             return Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Appointment creation failed.",
-                detail: "Verify that the patient exists and the selected user belongs to the Doctor role.",
+                detail: "Verify the patient, Doctor role, weekly availability, and time conflict.",
                 instance: HttpContext.Request.Path);
         }
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -68,7 +63,7 @@ public class AppointmentsController : ControllerBase
     // 3. GET: api/appointments/{id}
     // This endpoint retrieves a specific appointment by its ID. Patients can only access their own appointme nts, while Admins and Doctors can access any appointment.
     [HttpGet("api/appointments/{id}")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetById(int id)
     {
         var app = await _appService.GetAppointmentByIdAsync(id);
@@ -81,20 +76,13 @@ public class AppointmentsController : ControllerBase
                 instance: HttpContext.Request.Path);
         }
 
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, app.PatientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(app.PatientId);
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own appointments.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's appointments.",
+                instance: HttpContext.Request.Path);
         }
 
         return Ok(app);
@@ -112,7 +100,7 @@ public class AppointmentsController : ControllerBase
             return Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Appointment update failed.",
-                detail: "Verify that the appointment exists and the selected user belongs to the Doctor role.",
+                detail: "Verify the appointment, Doctor role, weekly availability, and time conflict.",
                 instance: HttpContext.Request.Path);
         }
         return NoContent();

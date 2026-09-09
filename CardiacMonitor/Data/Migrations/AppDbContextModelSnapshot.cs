@@ -65,6 +65,161 @@ namespace CardiacMonitor.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CardiacMonitor.Models.DoctorAvailability", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DoctorProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorProfileId", "DayOfWeek", "IsActive");
+
+                    b.HasIndex("DoctorProfileId", "DayOfWeek", "StartTime", "EndTime")
+                        .IsUnique();
+
+                    b.ToTable("DoctorAvailabilitySlots", t =>
+                        {
+                            t.HasCheckConstraint("CK_DoctorAvailability_DayOfWeek", "[DayOfWeek] BETWEEN 0 AND 6");
+
+                            t.HasCheckConstraint("CK_DoctorAvailability_TimeRange", "[StartTime] < [EndTime]");
+                        });
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.DoctorProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LicenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Specialty")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LicenseNumber")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("Specialty", "IsActive");
+
+                    b.ToTable("DoctorProfiles");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.MedicalAlert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AcknowledgedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResolvedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("VitalSignId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcknowledgedByUserId");
+
+                    b.HasIndex("ResolvedByUserId");
+
+                    b.HasIndex("VitalSignId")
+                        .IsUnique()
+                        .HasFilter("[VitalSignId] IS NOT NULL");
+
+                    b.HasIndex("Status", "Severity");
+
+                    b.HasIndex("PatientId", "Status", "CreatedAt");
+
+                    b.ToTable("MedicalAlerts", t =>
+                        {
+                            t.HasCheckConstraint("CK_MedicalAlerts_Severity", "[Severity] IN ('Medium', 'High', 'Critical')");
+
+                            t.HasCheckConstraint("CK_MedicalAlerts_Status", "[Status] IN ('Open', 'Acknowledged', 'Resolved')");
+                        });
+                });
+
             modelBuilder.Entity("CardiacMonitor.Models.Medication", b =>
                 {
                     b.Property<int>("Id")
@@ -106,6 +261,45 @@ namespace CardiacMonitor.Data.Migrations
                         .HasDatabaseName("IX_Medications_PatientId_IsActive");
 
                     b.ToTable("Medications");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.NurseProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("LicenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LicenseNumber")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("NurseProfiles");
                 });
 
             modelBuilder.Entity("CardiacMonitor.Models.Patient", b =>
@@ -169,6 +363,55 @@ namespace CardiacMonitor.Data.Migrations
                             FirstName = "Sara",
                             Gender = "Female",
                             LastName = "Ali"
+                        });
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.PatientCareAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AssignedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("NurseProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedByUserId");
+
+                    b.HasIndex("NurseProfileId", "IsActive");
+
+                    b.HasIndex("PatientId", "IsActive");
+
+                    b.HasIndex("PatientId", "NurseProfileId")
+                        .IsUnique();
+
+                    b.ToTable("PatientCareAssignments", t =>
+                        {
+                            t.HasCheckConstraint("CK_PatientCareAssignments_EndState", "([IsActive] = 1 AND [EndedAt] IS NULL) OR ([IsActive] = 0 AND [EndedAt] IS NOT NULL)");
                         });
                 });
 
@@ -341,6 +584,12 @@ namespace CardiacMonitor.Data.Migrations
                             Id = "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
                             Name = "Patient",
                             NormalizedName = "PATIENT"
+                        },
+                        new
+                        {
+                            Id = "d4e5f67a-8b9c-0d1e-2f3a-4b5c6d7e8f90",
+                            Name = "Nurse",
+                            NormalizedName = "NURSE"
                         });
                 });
 
@@ -559,6 +808,60 @@ namespace CardiacMonitor.Data.Migrations
                     b.Navigation("Patient");
                 });
 
+            modelBuilder.Entity("CardiacMonitor.Models.DoctorAvailability", b =>
+                {
+                    b.HasOne("CardiacMonitor.Models.DoctorProfile", "DoctorProfile")
+                        .WithMany("AvailabilitySlots")
+                        .HasForeignKey("DoctorProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DoctorProfile");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.DoctorProfile", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithOne()
+                        .HasForeignKey("CardiacMonitor.Models.DoctorProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.MedicalAlert", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "AcknowledgedByUser")
+                        .WithMany()
+                        .HasForeignKey("AcknowledgedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CardiacMonitor.Models.Patient", "Patient")
+                        .WithMany("MedicalAlerts")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "ResolvedByUser")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CardiacMonitor.Models.VitalSign", "VitalSign")
+                        .WithOne("MedicalAlert")
+                        .HasForeignKey("CardiacMonitor.Models.MedicalAlert", "VitalSignId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AcknowledgedByUser");
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("ResolvedByUser");
+
+                    b.Navigation("VitalSign");
+                });
+
             modelBuilder.Entity("CardiacMonitor.Models.Medication", b =>
                 {
                     b.HasOne("CardiacMonitor.Models.Patient", "Patient")
@@ -570,12 +873,50 @@ namespace CardiacMonitor.Data.Migrations
                     b.Navigation("Patient");
                 });
 
+            modelBuilder.Entity("CardiacMonitor.Models.NurseProfile", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithOne()
+                        .HasForeignKey("CardiacMonitor.Models.NurseProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CardiacMonitor.Models.Patient", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithOne()
                         .HasForeignKey("CardiacMonitor.Models.Patient", "UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.PatientCareAssignment", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "AssignedByUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CardiacMonitor.Models.NurseProfile", "NurseProfile")
+                        .WithMany("CareAssignments")
+                        .HasForeignKey("NurseProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CardiacMonitor.Models.Patient", "Patient")
+                        .WithMany("CareAssignments")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedByUser");
+
+                    b.Navigation("NurseProfile");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("CardiacMonitor.Models.RefreshToken", b =>
@@ -651,9 +992,28 @@ namespace CardiacMonitor.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CardiacMonitor.Models.DoctorProfile", b =>
+                {
+                    b.Navigation("AvailabilitySlots");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.NurseProfile", b =>
+                {
+                    b.Navigation("CareAssignments");
+                });
+
             modelBuilder.Entity("CardiacMonitor.Models.Patient", b =>
                 {
+                    b.Navigation("CareAssignments");
+
+                    b.Navigation("MedicalAlerts");
+
                     b.Navigation("VitalSigns");
+                });
+
+            modelBuilder.Entity("CardiacMonitor.Models.VitalSign", b =>
+                {
+                    b.Navigation("MedicalAlert");
                 });
 #pragma warning restore 612, 618
         }

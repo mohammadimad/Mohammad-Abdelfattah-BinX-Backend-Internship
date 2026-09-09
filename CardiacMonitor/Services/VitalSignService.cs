@@ -9,6 +9,7 @@ public class VitalSignService : IVitalSignService
 {
     private readonly AppDbContext _context;
 
+    // Stores the database context used by vital-sign and alert operations.
     public VitalSignService(AppDbContext context)
     {
         _context = context;
@@ -70,6 +71,7 @@ public class VitalSignService : IVitalSignService
             totalPages);
     }
 
+    // Returns one vital-sign reading by its identifier.
     public async Task<VitalSignResponse?> GetVitalSignByIdAsync(int id)
     {
         var vital = await _context.VitalSigns
@@ -81,6 +83,7 @@ public class VitalSignService : IVitalSignService
         return new VitalSignResponse(vital.Id, vital.PatientId, vital.HeartRate, vital.OxygenSaturation, vital.SystolicBP, vital.DiastolicBP, vital.RecordedAt);
     }
 
+    // Creates a vital-sign reading and opens an alert when thresholds are exceeded.
     public async Task<VitalSignResponse?> CreateVitalSignAsync(int patientId, CreateVitalSignRequest request)
     {
         var patientExists = await _context.Patients.AnyAsync(p => p.Id == patientId);
@@ -97,25 +100,31 @@ public class VitalSignService : IVitalSignService
         };
 
         _context.VitalSigns.Add(vital);
+        SynchronizeMedicalAlert(vital);
         await _context.SaveChangesAsync();
 
         return new VitalSignResponse(vital.Id, vital.PatientId, vital.HeartRate, vital.OxygenSaturation, vital.SystolicBP, vital.DiastolicBP, vital.RecordedAt);
     }
 
+    // Updates a reading and synchronizes its generated medical alert.
     public async Task<bool> UpdateVitalSignAsync(int id, UpdateVitalSignRequest request)
     {
-        var vital = await _context.VitalSigns.FirstOrDefaultAsync(v => v.Id == id);
+        var vital = await _context.VitalSigns
+            .Include(item => item.MedicalAlert)
+            .FirstOrDefaultAsync(item => item.Id == id);
         if (vital == null) return false;
 
         vital.HeartRate = request.HeartRate;
         vital.OxygenSaturation = request.OxygenSaturation;
         vital.SystolicBP = request.SystolicBP;
         vital.DiastolicBP = request.DiastolicBP;
+        SynchronizeMedicalAlert(vital);
 
         await _context.SaveChangesAsync();
         return true;
     }
 
+    // Deletes one vital-sign reading while preserving any linked alert audit record.
     public async Task<bool> DeleteVitalSignAsync(int id)
     {
         var vital = await _context.VitalSigns.FirstOrDefaultAsync(v => v.Id == id);
@@ -146,5 +155,109 @@ public class VitalSignService : IVitalSignService
                 .OrderByDescending(vital => vital.RecordedAt)
                 .ThenByDescending(vital => vital.Id)
         };
+    }
+
+    // Creates, reopens, updates, or automatically resolves the alert for a reading.
+    private void SynchronizeMedicalAlert(VitalSign vital)
+    {
+        var evaluation = EvaluateVitalSign(vital);
+        var alert = vital.MedicalAlert;
+
+        if (evaluation == null)
+        {
+            if (alert != null && alert.Status != "Resolved")
+            {
+                alert.Status = "Resolved";
+                alert.ResolvedByUserId = null;
+                alert.ResolvedAt = DateTime.UtcNow;
+            }
+
+            return;
+        }
+
+        if (alert == null)
+        {
+            alert = new MedicalAlert
+            {
+                PatientId = vital.PatientId,
+                VitalSign = vital,
+                CreatedAt = DateTime.UtcNow
+            };
+            vital.MedicalAlert = alert;
+            _context.MedicalAlerts.Add(alert);
+        }
+
+        alert.Severity = evaluation.Value.Severity;
+        alert.Message = evaluation.Value.Message;
+        alert.Status = "Open";
+        alert.AcknowledgedByUserId = null;
+        alert.AcknowledgedAt = null;
+        alert.ResolvedByUserId = null;
+        alert.ResolvedAt = null;
+    }
+
+    // Evaluates demonstration thresholds and returns the highest alert severity.
+    private static (string Severity, string Message)? EvaluateVitalSign(VitalSign vital)
+    {
+        var severity = GetHighestSeverity(vital);
+        if (severity == null)
+        {
+            return null;
+        }
+
+        var abnormalValues = new List<string>();
+        if (vital.HeartRate is < 60 or > 100)
+        {
+            abnormalValues.Add($"heart rate {vital.HeartRate} bpm");
+        }
+
+        if (vital.OxygenSaturation < 95)
+        {
+            abnormalValues.Add($"oxygen saturation {vital.OxygenSaturation}%");
+        }
+
+        if (vital.SystolicBP is < 100 or > 140)
+        {
+            abnormalValues.Add($"systolic pressure {vital.SystolicBP} mmHg");
+        }
+
+        if (vital.DiastolicBP is < 65 or > 90)
+        {
+            abnormalValues.Add($"diastolic pressure {vital.DiastolicBP} mmHg");
+        }
+
+        return (
+            severity,
+            $"{severity} demonstration threshold detected: {string.Join(", ", abnormalValues)}.");
+    }
+
+    // Selects the most severe threshold exceeded by the reading.
+    private static string? GetHighestSeverity(VitalSign vital)
+    {
+        if (vital.HeartRate is < 40 or > 180 ||
+            vital.OxygenSaturation < 85 ||
+            vital.SystolicBP is < 80 or > 200 ||
+            vital.DiastolicBP is < 50 or > 120)
+        {
+            return "Critical";
+        }
+
+        if (vital.HeartRate is < 50 or > 140 ||
+            vital.OxygenSaturation < 90 ||
+            vital.SystolicBP is < 90 or > 180 ||
+            vital.DiastolicBP is < 60 or > 110)
+        {
+            return "High";
+        }
+
+        if (vital.HeartRate is < 60 or > 100 ||
+            vital.OxygenSaturation < 95 ||
+            vital.SystolicBP is < 100 or > 140 ||
+            vital.DiastolicBP is < 65 or > 90)
+        {
+            return "Medium";
+        }
+
+        return null;
     }
 }

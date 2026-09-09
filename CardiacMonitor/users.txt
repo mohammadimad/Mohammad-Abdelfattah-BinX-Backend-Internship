@@ -1,3 +1,7 @@
+ "email": "demo.admin@cardiac.local",
+  "password": "DemoAdmin123!"
+"role":  "Admin"
+
 {
   "email": "sfwafw@gmaile.com",
   "password": "Awqwe132@",

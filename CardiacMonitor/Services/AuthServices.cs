@@ -1,5 +1,6 @@
 ﻿using CardiacMonitor.Data;
 using CardiacMonitor.DTOs;
+using CardiacMonitor.Infrastructure;
 using CardiacMonitor.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ namespace CardiacMonitor.Services;
 
 public class AuthService : IAuthService
 {
+    private const string PatientRole = "Patient";
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _config;
@@ -33,7 +35,7 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    // Creates the identity user and role membership in one transaction.
+    // Creates a Patient identity, role membership, and domain profile atomically.
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
         var userExists = await _userManager.FindByEmailAsync(request.Email);
@@ -42,10 +44,10 @@ public class AuthService : IAuthService
             return new AuthResponse(false, "Email already registered.");
         }
 
-        var roleExists = await _roleManager.RoleExistsAsync(request.Role);
+        var roleExists = await _roleManager.RoleExistsAsync(PatientRole);
         if (!roleExists)
         {
-            return new AuthResponse(false, "Specified role does not exist.");
+            return new AuthResponse(false, "The Patient role is not configured.");
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -64,7 +66,7 @@ public class AuthService : IAuthService
                 return new AuthResponse(false, $"Registration failed: {errors}");
             }
 
-            var roleResult = await _userManager.AddToRoleAsync(user, request.Role);
+            var roleResult = await _userManager.AddToRoleAsync(user, PatientRole);
             if (!roleResult.Succeeded)
             {
                 await transaction.RollbackAsync();
@@ -72,8 +74,26 @@ public class AuthService : IAuthService
                 return new AuthResponse(false, $"Role assignment failed: {errors}");
             }
 
+            var patient = new Patient
+            {
+                UserId = user.Id,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                DateOfBirth = request.DateOfBirth,
+                Gender = request.Gender.Equals(
+                    "Male",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? "Male"
+                    : "Female",
+                ContactNumber = request.ContactNumber.Trim()
+            };
+            _context.Patients.Add(patient);
+            await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
-            return new AuthResponse(true, "User registered successfully.");
+            return new AuthResponse(
+                true,
+                "Patient account and profile registered successfully.");
         }
         catch
         {
@@ -205,6 +225,39 @@ public class AuthService : IAuthService
         foreach (var role in userRoles)
         {
             authClaims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var patientId = await _context.Patients
+            .Where(patient => patient.UserId == user.Id)
+            .Select(patient => (int?)patient.Id)
+            .SingleOrDefaultAsync();
+        if (patientId.HasValue)
+        {
+            authClaims.Add(new Claim(
+                CustomClaimTypes.PatientId,
+                patientId.Value.ToString()));
+        }
+
+        var nurseProfileId = await _context.NurseProfiles
+            .Where(nurse => nurse.UserId == user.Id)
+            .Select(nurse => (int?)nurse.Id)
+            .SingleOrDefaultAsync();
+        if (nurseProfileId.HasValue)
+        {
+            authClaims.Add(new Claim(
+                CustomClaimTypes.NurseProfileId,
+                nurseProfileId.Value.ToString()));
+        }
+
+        var doctorProfileId = await _context.DoctorProfiles
+            .Where(doctor => doctor.UserId == user.Id)
+            .Select(doctor => (int?)doctor.Id)
+            .SingleOrDefaultAsync();
+        if (doctorProfileId.HasValue)
+        {
+            authClaims.Add(new Claim(
+                CustomClaimTypes.DoctorProfileId,
+                doctorProfileId.Value.ToString()));
         }
 
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));

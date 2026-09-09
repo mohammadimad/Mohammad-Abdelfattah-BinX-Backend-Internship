@@ -9,6 +9,7 @@ public static class SeedData
     public const string AdminRoleId = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d";
     public const string DoctorRoleId = "b2c3d4e5-f67a-8b9c-0d1e-2f3a4b5c6d7e";
     public const string PatientRoleId = "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f";
+    public const string NurseRoleId = "d4e5f67a-8b9c-0d1e-2f3a-4b5c6d7e8f90";
     public const string DoctorUserId = "doctor-id-123";
 
     // Adds stable reference and demonstration data to the EF Core model.
@@ -17,7 +18,8 @@ public static class SeedData
         builder.Entity<IdentityRole>().HasData(
             new IdentityRole { Id = AdminRoleId, Name = "Admin", NormalizedName = "ADMIN" },
             new IdentityRole { Id = DoctorRoleId, Name = "Doctor", NormalizedName = "DOCTOR" },
-            new IdentityRole { Id = PatientRoleId, Name = "Patient", NormalizedName = "PATIENT" });
+            new IdentityRole { Id = PatientRoleId, Name = "Patient", NormalizedName = "PATIENT" },
+            new IdentityRole { Id = NurseRoleId, Name = "Nurse", NormalizedName = "NURSE" });
 
         builder.Entity<IdentityUser>().HasData(new IdentityUser
         {

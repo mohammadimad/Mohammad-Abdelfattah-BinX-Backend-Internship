@@ -13,36 +13,30 @@ namespace CardiacMonitor.Controllers;
 public class VitalSignsController : ControllerBase
 {
     private readonly IVitalSignService _vitalService;
-    private readonly IPatientService _patientService; 
-    public VitalSignsController(IVitalSignService vitalService, IPatientService patientService)
+    private readonly IPatientAccessService _patientAccessService;
+    public VitalSignsController(
+        IVitalSignService vitalService,
+        IPatientAccessService patientAccessService)
     {
         _vitalService = vitalService;
-        _patientService = patientService;
+        _patientAccessService = patientAccessService;
     }
 
     // 1. GET: api/patients/{patientId}/vitals
     //Patient can only access their own vital signs, while Admins and Doctors can access any patient's vital signs.
     [HttpGet("api/patients/{patientId}/vitals")]
-    [Authorize] 
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetPatientVitals(
         int patientId,
         [FromQuery] VitalSignQueryParameters queryParameters)
     {
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, patientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(patientId);
-            // Ownership Check: If the user is a patient, they can only access their own vital signs.
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own vital signs.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's vital signs.",
+                instance: HttpContext.Request.Path);
         }
 
         var vitals = await _vitalService.GetVitalSignsByPatientIdAsync(
@@ -54,24 +48,16 @@ public class VitalSignsController : ControllerBase
     // 2. POST: api/patients/{patientId}/vitals 
     // Patients can only create vital signs for themselves, while Admins and Doctors can create vital signs for any patient.
     [HttpPost("api/patients/{patientId}/vitals")]
-    [Authorize(Roles = "Admin,Doctor,Patient")]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> CreateVital(int patientId, [FromBody] CreateVitalSignRequest request)
     {
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, patientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(patientId);
-            // Ownership Check: If the user is a patient, they can only create vital signs for themselves.
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can create vital signs only for themselves.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You cannot create vital signs for this patient.",
+                instance: HttpContext.Request.Path);
         }
 
         var created = await _vitalService.CreateVitalSignAsync(patientId, request);
@@ -89,7 +75,7 @@ public class VitalSignsController : ControllerBase
     // 3. GET: api/vitals/{id}
     // Patients can only access their own vital signs, while Admins and Doctors can access any vital sign.
     [HttpGet("api/vitals/{id}")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetById(int id)
     {
         var vital = await _vitalService.GetVitalSignByIdAsync(id);
@@ -102,20 +88,13 @@ public class VitalSignsController : ControllerBase
                 instance: HttpContext.Request.Path);
         }
 
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, vital.PatientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(vital.PatientId);
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own vital signs.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's vital signs.",
+                instance: HttpContext.Request.Path);
         }
 
         return Ok(vital);

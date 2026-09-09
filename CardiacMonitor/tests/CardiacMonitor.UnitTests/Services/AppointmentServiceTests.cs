@@ -4,6 +4,7 @@ using CardiacMonitor.Models;
 using CardiacMonitor.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace CardiacMonitor.UnitTests.Services;
 
@@ -23,7 +24,7 @@ public class AppointmentServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new AppointmentService(context);
+        var service = CreateService(context);
         var request = new CreateAppointmentRequest(
             "ordinary-user",
             DateTime.UtcNow.AddDays(1),
@@ -66,7 +67,7 @@ public class AppointmentServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new AppointmentService(context);
+        var service = CreateService(context);
         var request = new CreateAppointmentRequest(
             doctor.Id,
             DateTime.UtcNow.AddDays(1),
@@ -118,7 +119,7 @@ public class AppointmentServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new AppointmentService(context);
+        var service = CreateService(context);
         var request = new CreateAppointmentRequest(
             doctor.Id,
             appointmentDate,
@@ -133,6 +134,48 @@ public class AppointmentServiceTests
         Assert.Single(context.Appointments);
     }
 
+    // Verifies that an appointment outside the Doctor schedule is rejected.
+    [Fact]
+    public async Task CreateAppointmentAsync_ReturnsNull_WhenDoctorIsUnavailable()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var doctorRole = new IdentityRole
+        {
+            Id = "doctor-role",
+            Name = "Doctor",
+            NormalizedName = "DOCTOR"
+        };
+        var doctor = new IdentityUser
+        {
+            Id = "doctor-user",
+            UserName = "doctor@example.com"
+        };
+        context.Patients.Add(CreatePatient());
+        context.Roles.Add(doctorRole);
+        context.Users.Add(doctor);
+        context.UserRoles.Add(new IdentityUserRole<string>
+        {
+            UserId = doctor.Id,
+            RoleId = doctorRole.Id
+        });
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context, isAvailable: false);
+        var request = new CreateAppointmentRequest(
+            doctor.Id,
+            DateTime.UtcNow.AddDays(1),
+            "Scheduled",
+            null);
+
+        // Act
+        var result = await service.CreateAppointmentAsync(1, request);
+
+        // Assert
+        Assert.Null(result);
+        Assert.Empty(context.Appointments);
+    }
+
     // Creates an isolated in-memory database context for each unit test.
     private static AppDbContext CreateContext()
     {
@@ -141,6 +184,20 @@ public class AppointmentServiceTests
             .Options;
 
         return new AppDbContext(options);
+    }
+
+    // Creates an appointment service with a controlled Doctor schedule result.
+    private static AppointmentService CreateService(
+        AppDbContext context,
+        bool isAvailable = true)
+    {
+        var scheduleService = new Mock<IDoctorScheduleService>();
+        scheduleService
+            .Setup(service => service.IsDoctorAvailableAsync(
+                It.IsAny<string>(),
+                It.IsAny<DateTime>()))
+            .ReturnsAsync(isAvailable);
+        return new AppointmentService(context, scheduleService.Object);
     }
 
     // Creates a valid patient used by appointment service tests.

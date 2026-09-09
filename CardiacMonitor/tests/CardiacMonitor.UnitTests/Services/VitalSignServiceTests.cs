@@ -38,6 +38,34 @@ public class VitalSignServiceTests
         Assert.Equal(2, result.TotalPages);
     }
 
+    // Verifies that a critical reading creates a linked open medical alert.
+    [Fact]
+    public async Task CreateVitalSignAsync_CreatesCriticalAlert_WhenThresholdIsExceeded()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        context.Patients.Add(CreatePatient());
+        await context.SaveChangesAsync();
+
+        var service = new VitalSignService(context);
+        var request = new CreateVitalSignRequest(
+            HeartRate: 190,
+            OxygenSaturation: 82,
+            SystolicBP: 210,
+            DiastolicBP: 125);
+
+        // Act
+        var created = await service.CreateVitalSignAsync(1, request);
+
+        // Assert
+        Assert.NotNull(created);
+        var alert = await context.MedicalAlerts.SingleAsync();
+        Assert.Equal(created.Id, alert.VitalSignId);
+        Assert.Equal("Critical", alert.Severity);
+        Assert.Equal("Open", alert.Status);
+        Assert.Contains("heart rate 190 bpm", alert.Message);
+    }
+
     // Creates an isolated EF Core context for a vital-sign service test.
     private static AppDbContext CreateContext()
     {

@@ -17,6 +17,13 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Medication> Medications => Set<Medication>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<NurseProfile> NurseProfiles => Set<NurseProfile>();
+    public DbSet<PatientCareAssignment> PatientCareAssignments =>
+        Set<PatientCareAssignment>();
+    public DbSet<DoctorProfile> DoctorProfiles => Set<DoctorProfile>();
+    public DbSet<DoctorAvailability> DoctorAvailabilitySlots =>
+        Set<DoctorAvailability>();
+    public DbSet<MedicalAlert> MedicalAlerts => Set<MedicalAlert>();
 
     // Configures the database model and applies deterministic seed data.
     protected override void OnModelCreating(ModelBuilder builder)

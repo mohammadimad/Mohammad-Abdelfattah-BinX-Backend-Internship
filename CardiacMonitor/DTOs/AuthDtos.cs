@@ -1,6 +1,13 @@
 ﻿namespace CardiacMonitor.DTOs;
 
-public record RegisterRequest(string Email, string Password, string Role);
+public record RegisterRequest(
+    string Email,
+    string Password,
+    string FirstName,
+    string LastName,
+    DateTime DateOfBirth,
+    string Gender,
+    string ContactNumber);
 public record LoginRequest(string Email, string Password);
 
 //Record to hold both access and refresh tokens

@@ -13,34 +13,29 @@ namespace CardiacMonitor.Controllers;
 public class MedicationsController : ControllerBase
 {
     private readonly IMedicationService _medService;
-    private readonly IPatientService _patientService;
+    private readonly IPatientAccessService _patientAccessService;
 
-    public MedicationsController(IMedicationService medService, IPatientService patientService)
+    public MedicationsController(
+        IMedicationService medService,
+        IPatientAccessService patientAccessService)
     {
         _medService = medService;
-        _patientService = patientService;
+        _patientAccessService = patientAccessService;
     }
 
     // 1. GET: api/patients/{patientId}/medications
     // This endpoint retrieves all medications for a specific patient. Patients can only access their own medications, while Admins and Doctors can access any patient's medications.
     [HttpGet("api/patients/{patientId}/medications")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetPatientMedications(int patientId)
     {
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, patientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(patientId);
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own medications.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's medications.",
+                instance: HttpContext.Request.Path);
         }
 
         var meds = await _medService.GetMedicationsByPatientIdAsync(patientId);
@@ -68,7 +63,7 @@ public class MedicationsController : ControllerBase
     // 3. GET: api/medications/{id}
     // This endpoint retrieves a specific medication by its ID. Patients can only access their own medications, while Admins and Doctors can access any medication.
     [HttpGet("api/medications/{id}")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetById(int id)
     {
         var med = await _medService.GetMedicationByIdAsync(id);
@@ -81,20 +76,13 @@ public class MedicationsController : ControllerBase
                 instance: HttpContext.Request.Path);
         }
 
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        if (isPatient)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, med.PatientId))
         {
-            var patient = await _patientService.GetPatientByIdAsync(med.PatientId);
-            if (patient == null || patient.UserId != loggedInUserId)
-            {
-                return Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Access forbidden.",
-                    detail: "Patients can access only their own medications.",
-                    instance: HttpContext.Request.Path);
-            }
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient's medications.",
+                instance: HttpContext.Request.Path);
         }
 
         return Ok(med);

@@ -12,10 +12,14 @@ namespace CardiacMonitor.Controllers;
 public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
+    private readonly IPatientAccessService _patientAccessService;
 
-    public PatientsController(IPatientService patientService)
+    public PatientsController(
+        IPatientService patientService,
+        IPatientAccessService patientAccessService)
     {
         _patientService = patientService;
+        _patientAccessService = patientAccessService;
     }
 
     // 1. GET: api/patient
@@ -30,7 +34,7 @@ public class PatientsController : ControllerBase
 
     // 2. GET: api/patients/{id} (محمي بالفلسفة الأمنية الكاملة)
     [HttpGet("{id}")]
-    [Authorize] // مسموح لجميع الأدوار المسجلة الدخول، ولكن الفحص الأمني بالداخل يفصل الصلاحية
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> GetById(int id)
     {
         var patient = await _patientService.GetPatientByIdAsync(id);
@@ -43,18 +47,12 @@ public class PatientsController : ControllerBase
                 instance: HttpContext.Request.Path);
         }
 
-        //Ownership Check: If the user is ill, it must be the same patient attempting to access their data.
-        var loggedInUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isPatient = User.IsInRole("Patient");
-
-        // 🛡️ الفلسفة الأمنية (Ownership Check):
-        // If the user is sick and tries to read data from another patient other than their own profile -> we will immediately block them with a 403 Forbidden!
-        if (isPatient && patient.UserId != loggedInUserId)
+        if (!await _patientAccessService.CanAccessPatientAsync(User, id))
         {
             return Problem(
                 statusCode: StatusCodes.Status403Forbidden,
                 title: "Access forbidden.",
-                detail: "Patients can access only their own profile.",
+                detail: "You do not have access to this patient profile.",
                 instance: HttpContext.Request.Path);
         }
 

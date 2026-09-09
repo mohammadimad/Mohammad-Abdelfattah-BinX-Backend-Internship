@@ -13,6 +13,7 @@ using FluentValidation.AspNetCore;
 using CardiacMonitor.Validators;
 using CardiacMonitor.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,12 +135,19 @@ builder.Services.AddScoped<IVitalSignService, VitalSignService>();
 builder.Services.AddScoped<IMedicationService, MedicationService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<ICareAssignmentService, CareAssignmentService>();
+builder.Services.AddScoped<IPatientAccessService, PatientAccessService>();
+builder.Services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
+builder.Services.AddScoped<IMedicalAlertService, MedicalAlertService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler,
     ProblemDetailsAuthorizationMiddlewareResultHandler>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 //Validation configuration using FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -150,6 +158,7 @@ builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseMiddleware<RequestCorrelationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

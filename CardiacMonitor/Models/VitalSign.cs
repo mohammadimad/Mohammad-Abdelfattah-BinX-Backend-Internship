@@ -12,6 +12,7 @@ namespace CardiacMonitor.Models
         public int DiastolicBP { get; set; }
         public DateTime RecordedAt { get; set; }
         public Patient Patient { get; set; } = null!;
+        public MedicalAlert? MedicalAlert { get; set; }
 
     }
 }

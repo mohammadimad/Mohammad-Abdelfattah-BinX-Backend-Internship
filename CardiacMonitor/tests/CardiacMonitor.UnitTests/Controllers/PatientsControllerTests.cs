@@ -57,7 +57,8 @@ public class PatientsControllerTests
         var controller = CreateController(
             patientService.Object,
             "different-user",
-            "Patient");
+            "Patient",
+            canAccess: false);
 
         // Act
         var result = await controller.GetById(1);
@@ -105,15 +106,25 @@ public class PatientsControllerTests
     private static PatientsController CreateController(
         IPatientService patientService,
         string userId,
-        string role)
+        string role,
+        bool canAccess = true)
     {
+        var patientAccessService = new Mock<IPatientAccessService>();
+        patientAccessService
+            .Setup(service => service.CanAccessPatientAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<int>()))
+            .ReturnsAsync(canAccess);
+
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Role, role)
         };
 
-        var controller = new PatientsController(patientService)
+        var controller = new PatientsController(
+            patientService,
+            patientAccessService.Object)
         {
             ControllerContext = new ControllerContext
             {

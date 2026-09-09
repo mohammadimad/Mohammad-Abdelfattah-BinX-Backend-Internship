@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using CardiacMonitor.Data;
 using CardiacMonitor.DTOs;
+using CardiacMonitor.Infrastructure;
 using CardiacMonitor.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -215,33 +216,57 @@ public class ApiEndpointsTests : IClassFixture<CardiacMonitorApiFactory>
         Assert.Contains(nameof(VitalSignQueryParameters.PageSize), problem.Errors.Keys);
     }
 
-    // Verifies that invalid roles do not leave orphaned identity users.
+    // Verifies that public registration cannot self-assign a privileged role.
     [Fact]
-    public async Task Register_ReturnsBadRequestWithoutCreatingUser_WhenRoleIsInvalid()
+    public async Task Register_AssignsPatientRole_WhenBodyContainsInjectedRole()
     {
         // Arrange
-        var email = $"invalid-role-{Guid.NewGuid():N}@test.local";
+        var email = $"role-injection-{Guid.NewGuid():N}@test.local";
         using var client = CreateClient();
-        var request = new RegisterRequest(email, "ValidPassword1!", "UnknownRole");
+        var request = new
+        {
+            Email = email,
+            Password = "ValidPassword1!",
+            FirstName = "Secure",
+            LastName = "Patient",
+            DateOfBirth = new DateTime(1995, 1, 1),
+            Gender = "Male",
+            ContactNumber = "+970599111111",
+            Role = "Admin"
+        };
 
         // Act
         var response = await client.PostAsJsonAsync("/api/auth/register", request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.False(await context.Users.AnyAsync(user => user.Email == email));
+        var user = await context.Users.SingleAsync(entity => entity.Email == email);
+        var roles = await (
+            from userRole in context.UserRoles
+            join role in context.Roles on userRole.RoleId equals role.Id
+            where userRole.UserId == user.Id
+            select role.NormalizedName).ToListAsync();
+        Assert.Contains("PATIENT", roles);
+        Assert.DoesNotContain("ADMIN", roles);
     }
 
-    // Verifies that registration commits both the identity user and role membership.
+    // Verifies that registration commits identity, Patient role, and domain profile.
     [Fact]
-    public async Task Register_CreatesUserAndRole_WhenRequestIsValid()
+    public async Task Register_CreatesIdentityRoleAndPatientProfile_WhenRequestIsValid()
     {
         // Arrange
         var email = $"registered-{Guid.NewGuid():N}@test.local";
         using var client = CreateClient();
-        var request = new RegisterRequest(email, "ValidPassword1!", "Patient");
+        var request = new RegisterRequest(
+            email,
+            "ValidPassword1!",
+            "Registered",
+            "Patient",
+            new DateTime(1992, 6, 15),
+            "Female",
+            "+970599222222");
 
         // Act
         var response = await client.PostAsJsonAsync("/api/auth/register", request);
@@ -255,6 +280,215 @@ public class ApiEndpointsTests : IClassFixture<CardiacMonitorApiFactory>
             .SingleAsync(role => role.NormalizedName == "PATIENT");
         Assert.True(await context.UserRoles.AnyAsync(userRole =>
             userRole.UserId == user.Id && userRole.RoleId == patientRole.Id));
+        var patient = await context.Patients.SingleAsync(entity =>
+            entity.UserId == user.Id);
+        Assert.Equal("Registered", patient.FirstName);
+        Assert.Equal("Female", patient.Gender);
+    }
+
+    // Verifies that login includes the linked Patient domain identifier in the JWT.
+    [Fact]
+    public async Task Login_ReturnsPatientIdClaim_AfterPatientRegistration()
+    {
+        // Arrange
+        var email = $"claim-{Guid.NewGuid():N}@test.local";
+        const string password = "ValidPassword1!";
+        using var client = CreateClient();
+        var registerRequest = new RegisterRequest(
+            email,
+            password,
+            "Claim",
+            "Patient",
+            new DateTime(1991, 3, 20),
+            "Male",
+            "+970599444444");
+        var registerResponse = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            registerRequest);
+        Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
+
+        // Act
+        var loginResponse = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(email, password));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        var tokenResponse = await loginResponse.Content
+            .ReadFromJsonAsync<AuthResponse>();
+        Assert.False(string.IsNullOrWhiteSpace(tokenResponse?.Token));
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(tokenResponse!.Token);
+        var patientIdClaim = jwt.Claims.Single(claim =>
+            claim.Type == CustomClaimTypes.PatientId);
+        Assert.True(int.TryParse(patientIdClaim.Value, out var patientId));
+        Assert.True(patientId > 0);
+    }
+
+    // Verifies the complete Admin assignment and Nurse resource-access workflow.
+    [Fact]
+    public async Task Nurse_CanAccessAssignedPatient_ButCannotAccessOtherPatient()
+    {
+        // Arrange
+        var suffix = Guid.NewGuid().ToString("N");
+        using var adminClient = CreateAuthenticatedClient("admin-user", "Admin");
+        var nurseRequest = new CreateNurseRequest(
+            $"nurse-{suffix}@test.local",
+            "ValidPassword1!",
+            "Demo Cardiac Nurse",
+            $"RN-{suffix[..8]}",
+            "Cardiology");
+        var nurseResponse = await adminClient.PostAsJsonAsync(
+            "/api/staff/nurses",
+            nurseRequest);
+        Assert.Equal(HttpStatusCode.Created, nurseResponse.StatusCode);
+        var nurse = await nurseResponse.Content.ReadFromJsonAsync<NurseResponse>();
+        Assert.NotNull(nurse);
+
+        var assignmentResponse = await adminClient.PostAsJsonAsync(
+            "/api/patients/1/care-assignments",
+            new CreateCareAssignmentRequest(
+                nurse.Id,
+                "Responsible for daily vital-sign monitoring."));
+        Assert.Equal(HttpStatusCode.Created, assignmentResponse.StatusCode);
+
+        using var nurseClient = CreateAuthenticatedClient(nurse.UserId, "Nurse");
+
+        // Act
+        var assignedPatientResponse = await nurseClient.GetAsync("/api/patients/1");
+        var otherPatientResponse = await nurseClient.GetAsync("/api/patients/2");
+        var myPatientsResponse = await nurseClient.GetAsync("/api/nurses/me/patients");
+        var createNurseResponse = await nurseClient.PostAsJsonAsync(
+            "/api/staff/nurses",
+            nurseRequest with { Email = $"blocked-{suffix}@test.local" });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, assignedPatientResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, otherPatientResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, myPatientsResponse.StatusCode);
+        var assignedPatients = await myPatientsResponse.Content
+            .ReadFromJsonAsync<List<PatientResponse>>();
+        Assert.Contains(assignedPatients!, patient => patient.Id == 1);
+        Assert.Equal(HttpStatusCode.Forbidden, createNurseResponse.StatusCode);
+    }
+
+    // Verifies Doctor creation, weekly availability, and appointment enforcement end to end.
+    [Fact]
+    public async Task DoctorSchedule_AllowsInsideAppointment_AndRejectsOutsideAppointment()
+    {
+        // Arrange
+        var suffix = Guid.NewGuid().ToString("N");
+        using var adminClient = CreateAuthenticatedClient("admin-user", "Admin");
+        var doctorResponse = await adminClient.PostAsJsonAsync(
+            "/api/staff/doctors",
+            new CreateDoctorRequest(
+                $"doctor-{suffix}@test.local",
+                "ValidPassword1!",
+                "Dr. Schedule Demo",
+                $"MD-{suffix[..8]}",
+                "Cardiology",
+                "Cardiac Care"));
+        Assert.Equal(HttpStatusCode.Created, doctorResponse.StatusCode);
+        var doctor = await doctorResponse.Content.ReadFromJsonAsync<DoctorResponse>();
+        Assert.NotNull(doctor);
+
+        var appointmentDay = DateTime.UtcNow.Date.AddDays(1);
+        var availabilityResponse = await adminClient.PostAsJsonAsync(
+            $"/api/doctors/{doctor.Id}/availability",
+            new CreateDoctorAvailabilityRequest(
+                appointmentDay.DayOfWeek,
+                new TimeOnly(9, 0),
+                new TimeOnly(12, 0)));
+        Assert.Equal(HttpStatusCode.Created, availabilityResponse.StatusCode);
+
+        var insideRequest = new CreateAppointmentRequest(
+            doctor.UserId,
+            appointmentDay.AddHours(10),
+            "Scheduled",
+            "Inside weekly availability");
+        var outsideRequest = insideRequest with
+        {
+            AppointmentDate = appointmentDay.AddHours(14),
+            Notes = "Outside weekly availability"
+        };
+
+        // Act
+        var insideResponse = await adminClient.PostAsJsonAsync(
+            "/api/patients/1/appointments",
+            insideRequest);
+        var outsideResponse = await adminClient.PostAsJsonAsync(
+            "/api/patients/1/appointments",
+            outsideRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, insideResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, outsideResponse.StatusCode);
+        var problem = await outsideResponse.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.Contains("weekly availability", problem?.Detail);
+    }
+
+    // Verifies that a critical reading produces an auditable alert workflow.
+    [Fact]
+    public async Task CriticalVitalSign_CreatesAlert_ThatCanBeAcknowledgedAndResolved()
+    {
+        // Arrange
+        using var adminClient = CreateAuthenticatedClient("admin-user", "Admin");
+        var vitalResponse = await adminClient.PostAsJsonAsync(
+            "/api/patients/2/vitals",
+            new CreateVitalSignRequest(190, 82m, 210, 125));
+        Assert.Equal(HttpStatusCode.Created, vitalResponse.StatusCode);
+        var vital = await vitalResponse.Content.ReadFromJsonAsync<VitalSignResponse>();
+        Assert.NotNull(vital);
+
+        var alertsResponse = await adminClient.GetAsync("/api/patients/2/alerts");
+        Assert.Equal(HttpStatusCode.OK, alertsResponse.StatusCode);
+        var alerts = await alertsResponse.Content
+            .ReadFromJsonAsync<List<MedicalAlertResponse>>();
+        var alert = Assert.Single(alerts!, item => item.VitalSignId == vital.Id);
+        Assert.Equal("Critical", alert.Severity);
+        Assert.Equal("Open", alert.Status);
+
+        // Act
+        var acknowledgeResponse = await adminClient.PatchAsync(
+            $"/api/alerts/{alert.Id}/acknowledge",
+            null);
+        var resolveResponse = await adminClient.PatchAsync(
+            $"/api/alerts/{alert.Id}/resolve",
+            null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, acknowledgeResponse.StatusCode);
+        var acknowledged = await acknowledgeResponse.Content
+            .ReadFromJsonAsync<MedicalAlertResponse>();
+        Assert.Equal("Acknowledged", acknowledged?.Status);
+        Assert.Equal("admin-user", acknowledged?.AcknowledgedByUserId);
+
+        Assert.Equal(HttpStatusCode.OK, resolveResponse.StatusCode);
+        var resolved = await resolveResponse.Content
+            .ReadFromJsonAsync<MedicalAlertResponse>();
+        Assert.Equal("Resolved", resolved?.Status);
+        Assert.Equal("admin-user", resolved?.ResolvedByUserId);
+    }
+
+    // Verifies that custom middleware preserves a client correlation ID.
+    [Fact]
+    public async Task RequestCorrelationMiddleware_ReturnsSuppliedCorrelationId()
+    {
+        // Arrange
+        const string correlationId = "week7-demo-correlation-id";
+        using var client = CreateAuthenticatedClient("admin-user", "Admin");
+        client.DefaultRequestHeaders.Add(
+            RequestCorrelationMiddleware.HeaderName,
+            correlationId);
+
+        // Act
+        var response = await client.GetAsync("/api/patients");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues(
+            RequestCorrelationMiddleware.HeaderName,
+            out var values));
+        Assert.Equal(correlationId, values.Single());
     }
 
     // Verifies that an administrator cannot be assigned as an appointment doctor.
