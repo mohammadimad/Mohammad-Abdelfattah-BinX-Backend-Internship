@@ -14,6 +14,7 @@ using CardiacMonitor.Validators;
 using CardiacMonitor.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,9 +78,30 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
-// Database configuration
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CardiacMonitorConnection")));
+// Database configuration with development-only SQL logging and request query counting.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<DatabaseQueryCounterInterceptor>();
+builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CardiacMonitorConnection"));
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.LogTo(Console.WriteLine, LogLevel.Information)
+            .AddInterceptors(serviceProvider.GetRequiredService<DatabaseQueryCounterInterceptor>());
+    }
+});
+
+// Redis stores low-change Doctor availability using the cache-aside pattern.
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+else
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+        options.Configuration = builder.Configuration.GetConnectionString("Redis"));
+}
 
 // Identity configuration
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -159,6 +181,11 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseMiddleware<RequestCorrelationMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<DatabasePerformanceMiddleware>();
+}
 
 if (app.Environment.IsDevelopment())
 {

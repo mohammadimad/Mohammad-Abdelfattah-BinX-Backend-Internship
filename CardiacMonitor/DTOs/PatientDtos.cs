@@ -35,4 +35,13 @@
             string? Gender = null,
             string Sort = "firstName_asc"
         );
+
+        public sealed record PatientClinicalDetailsResponse(
+            PatientResponse Patient,
+            IReadOnlyList<VitalSignResponse> VitalSigns,
+            IReadOnlyList<MedicationResponse> Medications,
+            IReadOnlyList<AppointmentResponse> Appointments,
+            IReadOnlyList<MedicalAlertResponse> MedicalAlerts,
+            IReadOnlyList<CareAssignmentResponse> CareAssignments
+        );
 }

@@ -4,6 +4,7 @@ using CardiacMonitor.Models;
 using CardiacMonitor.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CardiacMonitor.UnitTests.Services;
 
@@ -69,6 +70,45 @@ public class DoctorScheduleServiceTests
         // Assert
         Assert.True(insideSchedule);
         Assert.False(outsideSchedule);
+    }
+
+    // Verifies cache-aside reads and immediate invalidation after a schedule write.
+    [Fact]
+    public async Task GetAvailabilityAsync_RefreshesCacheAfterAvailabilityIsAdded()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        AddDoctor(context);
+        context.DoctorAvailabilitySlots.Add(new DoctorAvailability
+        {
+            DoctorProfileId = 1,
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(12, 0)
+        });
+        await context.SaveChangesAsync();
+
+        var services = new ServiceCollection();
+        services.AddDistributedMemoryCache();
+        await using var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<
+            Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
+        var service = new DoctorScheduleService(context, cache);
+
+        // Act
+        var initialAvailability = await service.GetAvailabilityAsync(1);
+        var addResult = await service.AddAvailabilityAsync(
+            1,
+            new CreateDoctorAvailabilityRequest(
+                DayOfWeek.Tuesday,
+                new TimeOnly(13, 0),
+                new TimeOnly(16, 0)));
+        var refreshedAvailability = await service.GetAvailabilityAsync(1);
+
+        // Assert
+        Assert.Single(initialAvailability);
+        Assert.True(addResult.Succeeded);
+        Assert.Equal(2, refreshedAvailability.Count);
     }
 
     // Creates an isolated EF Core context for each schedule test.

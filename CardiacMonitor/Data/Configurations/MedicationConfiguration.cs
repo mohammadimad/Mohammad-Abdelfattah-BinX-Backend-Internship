@@ -17,7 +17,7 @@ public sealed class MedicationConfiguration : IEntityTypeConfiguration<Medicatio
             .HasDatabaseName("IX_Medications_PatientId_IsActive");
 
         builder.HasOne(medication => medication.Patient)
-            .WithMany()
+            .WithMany(patient => patient.Medications)
             .HasForeignKey(medication => medication.PatientId)
             .OnDelete(DeleteBehavior.Cascade);
     }

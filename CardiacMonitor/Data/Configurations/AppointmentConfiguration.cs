@@ -28,7 +28,7 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
             .HasDatabaseName("IX_Appointments_PatientId_AppointmentDate");
 
         builder.HasOne(appointment => appointment.Patient)
-            .WithMany()
+            .WithMany(patient => patient.Appointments)
             .HasForeignKey(appointment => appointment.PatientId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(appointment => appointment.Doctor)

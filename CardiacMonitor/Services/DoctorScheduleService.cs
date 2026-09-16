@@ -3,17 +3,28 @@ using CardiacMonitor.Data;
 using CardiacMonitor.DTOs;
 using CardiacMonitor.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace CardiacMonitor.Services;
 
 public sealed class DoctorScheduleService : IDoctorScheduleService
 {
+    private static readonly DistributedCacheEntryOptions AvailabilityCacheOptions =
+        new()
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
+        };
     private readonly AppDbContext _context;
+    private readonly IDistributedCache? _cache;
 
-    // Stores the database context used by Doctor schedule operations.
-    public DoctorScheduleService(AppDbContext context)
+    // Stores the database context and optional distributed cache used by schedules.
+    public DoctorScheduleService(
+        AppDbContext context,
+        IDistributedCache? cache = null)
     {
         _context = context;
+        _cache = cache;
     }
 
     // Creates or reactivates a non-overlapping Doctor availability slot.
@@ -65,6 +76,7 @@ public sealed class DoctorScheduleService : IDoctorScheduleService
 
         slot.IsActive = true;
         await _context.SaveChangesAsync();
+        await InvalidateAvailabilityCacheAsync(doctorProfileId);
 
         return new DoctorAvailabilityResult(
             true,
@@ -76,7 +88,18 @@ public sealed class DoctorScheduleService : IDoctorScheduleService
     public async Task<IReadOnlyList<DoctorAvailabilityResponse>> GetAvailabilityAsync(
         int doctorProfileId)
     {
-        return await _context.DoctorAvailabilitySlots
+        var cacheKey = GetAvailabilityCacheKey(doctorProfileId);
+        if (_cache != null)
+        {
+            var cachedJson = await _cache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrWhiteSpace(cachedJson))
+            {
+                return JsonSerializer.Deserialize<List<DoctorAvailabilityResponse>>(
+                    cachedJson) ?? [];
+            }
+        }
+
+        var availability = await _context.DoctorAvailabilitySlots
             .AsNoTracking()
             .Where(slot => slot.DoctorProfileId == doctorProfileId && slot.IsActive)
             .OrderBy(slot => slot.DayOfWeek)
@@ -89,6 +112,16 @@ public sealed class DoctorScheduleService : IDoctorScheduleService
                 slot.EndTime,
                 slot.IsActive))
             .ToListAsync();
+
+        if (_cache != null)
+        {
+            await _cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(availability),
+                AvailabilityCacheOptions);
+        }
+
+        return availability;
     }
 
     // Returns one availability slot by its identifier.
@@ -119,6 +152,7 @@ public sealed class DoctorScheduleService : IDoctorScheduleService
 
         slot.IsActive = false;
         await _context.SaveChangesAsync();
+        await InvalidateAvailabilityCacheAsync(slot.DoctorProfileId);
         return true;
     }
 
@@ -171,5 +205,20 @@ public sealed class DoctorScheduleService : IDoctorScheduleService
             slot.StartTime,
             slot.EndTime,
             slot.IsActive);
+    }
+
+    // Builds the stable Redis key used for one Doctor's weekly availability.
+    private static string GetAvailabilityCacheKey(int doctorProfileId)
+    {
+        return $"doctor-availability:{doctorProfileId}";
+    }
+
+    // Removes cached availability immediately after a successful schedule write.
+    private async Task InvalidateAvailabilityCacheAsync(int doctorProfileId)
+    {
+        if (_cache != null)
+        {
+            await _cache.RemoveAsync(GetAvailabilityCacheKey(doctorProfileId));
+        }
     }
 }

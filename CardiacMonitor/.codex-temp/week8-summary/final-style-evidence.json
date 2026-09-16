@@ -1,0 +1,115 @@
+{
+  "input": "D:\\Visual Studio\\Mohammad-Abdelfattah-BinX-Backend-Internship\\CardiacMonitor\\Week_8_Advanced_Queries_Performance_Summary.docx",
+  "fonts_by_char_count": {
+    "Calibri": 1102
+  },
+  "direct_run_formatting_runs": 38,
+  "direct_paragraph_formatting_paragraphs": 25,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "WEEK 8 SUMMARY",
+      "style": "Title"
+    },
+    {
+      "para_index": 3,
+      "text": "Program: Backend Development Internship (.NET)",
+      "style": "Normal"
+    },
+    {
+      "para_index": 4,
+      "text": "Week: Week 8 of 10 | Phase 3: Applied Project Work, Sprint 3",
+      "style": "Normal"
+    },
+    {
+      "para_index": 5,
+      "text": "Theme: Advanced EF Core Queries, Redis Caching, and Measured Performance Tuning",
+      "style": "Normal"
+    },
+    {
+      "para_index": 6,
+      "text": "Duration: 40 hours across five training days",
+      "style": "Normal"
+    },
+    {
+      "para_index": 52,
+      "text": "Day",
+      "style": "Normal"
+    },
+    {
+      "para_index": 53,
+      "text": "Focus",
+      "style": "Normal"
+    },
+    {
+      "para_index": 54,
+      "text": "Key Outcome",
+      "style": "Normal"
+    },
+    {
+      "para_index": 70,
+      "text": "BINX TECH | BACKEND DEVELOPMENT INTERNSHIP",
+      "style": "Header"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "WEEK 8 SUMMARY",
+        "style": "Title"
+      },
+      {
+        "para_index": 2,
+        "text": "Advanced Queries, Redis Caching, and Performance Tuning in ASP.NET Core",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "Program: Backend Development Internship (.NET)",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "Week: Week 8 of 10 | Phase 3: Applied Project Work, Sprint 3",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "Theme: Advanced EF Core Queries, Redis Caching, and Measured Performance Tuning",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "WEEK 8 SUMMARY",
+        "style": "Title"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Advanced Queries, Redis Caching, and Performance Tuning in ASP.NET Core",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Program: ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Backend Development Internship (.NET)",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "run_text": "Week: ",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

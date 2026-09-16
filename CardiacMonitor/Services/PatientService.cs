@@ -74,6 +74,99 @@ namespace CardiacMonitor.Services
             return new PatientResponse(patient.Id, patient.UserId, patient.FirstName, patient.LastName, patient.DateOfBirth, patient.Gender, patient.ContactNumber);
         }
 
+        // Returns a patient detail graph as split queries to avoid Cartesian explosion.
+        public async Task<PatientClinicalDetailsResponse?> GetClinicalDetailsAsync(int id)
+        {
+            var patient = await _context.Patients
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(item => item.VitalSigns)
+                .Include(item => item.Medications)
+                .Include(item => item.Appointments)
+                .Include(item => item.MedicalAlerts)
+                .Include(item => item.CareAssignments)
+                    .ThenInclude(assignment => assignment.NurseProfile)
+                .FirstOrDefaultAsync(item => item.Id == id);
+
+            if (patient == null)
+            {
+                return null;
+            }
+
+            return new PatientClinicalDetailsResponse(
+                new PatientResponse(
+                    patient.Id,
+                    patient.UserId,
+                    patient.FirstName,
+                    patient.LastName,
+                    patient.DateOfBirth,
+                    patient.Gender,
+                    patient.ContactNumber),
+                patient.VitalSigns
+                    .OrderByDescending(vital => vital.RecordedAt)
+                    .Select(vital => new VitalSignResponse(
+                        vital.Id,
+                        vital.PatientId,
+                        vital.HeartRate,
+                        vital.OxygenSaturation,
+                        vital.SystolicBP,
+                        vital.DiastolicBP,
+                        vital.RecordedAt))
+                    .ToList(),
+                patient.Medications
+                    .OrderByDescending(medication => medication.IsActive)
+                    .ThenBy(medication => medication.Name)
+                    .Select(medication => new MedicationResponse(
+                        medication.Id,
+                        medication.PatientId,
+                        medication.Name,
+                        medication.Dosage,
+                        medication.Frequency,
+                        medication.StartDate,
+                        medication.EndDate,
+                        medication.IsActive))
+                    .ToList(),
+                patient.Appointments
+                    .OrderByDescending(appointment => appointment.AppointmentDate)
+                    .Select(appointment => new AppointmentResponse(
+                        appointment.Id,
+                        appointment.PatientId,
+                        appointment.DoctorId,
+                        appointment.AppointmentDate,
+                        appointment.Status,
+                        appointment.Notes))
+                    .ToList(),
+                patient.MedicalAlerts
+                    .OrderByDescending(alert => alert.CreatedAt)
+                    .Select(alert => new MedicalAlertResponse(
+                        alert.Id,
+                        alert.PatientId,
+                        alert.VitalSignId,
+                        alert.Severity,
+                        alert.Status,
+                        alert.Message,
+                        alert.CreatedAt,
+                        alert.AcknowledgedByUserId,
+                        alert.AcknowledgedAt,
+                        alert.ResolvedByUserId,
+                        alert.ResolvedAt))
+                    .ToList(),
+                patient.CareAssignments
+                    .OrderByDescending(assignment => assignment.IsActive)
+                    .ThenByDescending(assignment => assignment.AssignedAt)
+                    .Select(assignment => new CareAssignmentResponse(
+                        assignment.Id,
+                        assignment.PatientId,
+                        assignment.NurseProfileId,
+                        assignment.NurseProfile.FullName,
+                        assignment.AssignedByUserId,
+                        assignment.AssignedAt,
+                        assignment.EndedAt,
+                        assignment.IsActive,
+                        assignment.Notes))
+                    .ToList());
+        }
+
         public async Task<PatientResponse> CreatePatientAsync(CreatePatientRequest request)
         {
             var patient = new Patient

@@ -39,6 +39,48 @@ public class PatientServiceTests
         Assert.Equal(2, result.TotalPages);
     }
 
+    // Verifies the split-query detail response contains each related collection.
+    [Fact]
+    public async Task GetClinicalDetailsAsync_ReturnsRelatedClinicalCollections()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var patient = CreatePatient(1, "Clinical", "Patient", "Female");
+        context.Patients.Add(patient);
+        context.VitalSigns.Add(new VitalSign
+        {
+            PatientId = patient.Id,
+            HeartRate = 75,
+            OxygenSaturation = 98,
+            SystolicBP = 120,
+            DiastolicBP = 80,
+            RecordedAt = DateTime.UtcNow
+        });
+        context.Medications.Add(new Medication
+        {
+            PatientId = patient.Id,
+            Name = "Aspirin",
+            Dosage = "81 mg",
+            Frequency = "Daily",
+            StartDate = DateTime.UtcNow.Date,
+            IsActive = true
+        });
+        await context.SaveChangesAsync();
+
+        var service = new PatientService(context);
+
+        // Act
+        var result = await service.GetClinicalDetailsAsync(patient.Id);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.VitalSigns);
+        Assert.Single(result.Medications);
+        Assert.Empty(result.Appointments);
+        Assert.Empty(result.MedicalAlerts);
+        Assert.Empty(result.CareAssignments);
+    }
+
     // Creates an isolated EF Core context for a patient service test.
     private static AppDbContext CreateContext()
     {

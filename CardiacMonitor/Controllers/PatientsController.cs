@@ -58,6 +58,34 @@ public class PatientsController : ControllerBase
 
         return Ok(patient);
     }
+
+    // Returns a single patient's related clinical collections for a detail view.
+    [HttpGet("{id}/clinical-details")]
+    [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
+    public async Task<IActionResult> GetClinicalDetails(int id)
+    {
+        var patient = await _patientService.GetClinicalDetailsAsync(id);
+        if (patient == null)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Patient not found.",
+                detail: $"Patient with ID {id} was not found.",
+                instance: HttpContext.Request.Path);
+        }
+
+        if (!await _patientAccessService.CanAccessPatientAsync(User, id))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Access forbidden.",
+                detail: "You do not have access to this patient profile.",
+                instance: HttpContext.Request.Path);
+        }
+
+        return Ok(patient);
+    }
+
     //3. POST: api/patients 
     //Admin can create a new patient record
     [HttpPost]
