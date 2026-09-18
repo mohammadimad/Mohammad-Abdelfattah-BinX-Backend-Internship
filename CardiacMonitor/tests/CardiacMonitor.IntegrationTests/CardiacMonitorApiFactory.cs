@@ -1,4 +1,5 @@
 using CardiacMonitor.Data;
+using CardiacMonitor.Infrastructure;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +30,7 @@ public sealed class CardiacMonitorApiFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
+            services.AddTransient<IStartupFilter, QueryCountStartupFilter>();
             services.AddDataProtection()
                 .UseEphemeralDataProtectionProvider();
             services.RemoveAll<DbContextOptions<AppDbContext>>();
@@ -44,8 +46,9 @@ public sealed class CardiacMonitorApiFactory : WebApplicationFactory<Program>
                 services.Remove(databaseConfiguration);
             }
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(_connection));
+            services.AddDbContext<AppDbContext>((provider, options) =>
+                options.UseSqlite(_connection).AddInterceptors(
+                    provider.GetRequiredService<DatabaseQueryCounterInterceptor>()));
         });
     }
 

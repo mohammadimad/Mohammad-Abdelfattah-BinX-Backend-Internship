@@ -47,6 +47,13 @@ public class VitalSignsController : ControllerBase
 
     // 2. POST: api/patients/{patientId}/vitals 
     // Patients can only create vital signs for themselves, while Admins and Doctors can create vital signs for any patient.
+    /// <summary>Records vital signs and creates a medical alert when a critical threshold is crossed.</summary>
+    /// <param name="patientId">The accessible Patient profile to receive the reading.</param>
+    /// <param name="request">Heart rate in bpm, oxygen saturation in percent, and blood pressure in mmHg.</param>
+    /// <response code="201">The reading was saved; a critical reading may also create an alert.</response>
+    /// <response code="400">One or more measurement values failed validation.</response>
+    /// <response code="403">The caller cannot access this Patient.</response>
+    /// <response code="404">The Patient does not exist.</response>
     [HttpPost("api/patients/{patientId}/vitals")]
     [Authorize(Roles = "Admin,Doctor,Patient,Nurse")]
     public async Task<IActionResult> CreateVital(int patientId, [FromBody] CreateVitalSignRequest request)

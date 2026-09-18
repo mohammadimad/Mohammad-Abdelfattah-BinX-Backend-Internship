@@ -192,4 +192,10 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.genruntimeconfig.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\ref\CardiacMonitor.dll
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\Cardiac Patient Monitoring API.postman_collection.json
-D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\Microsoft.Extensions.Caching.StackExchangeRedis.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\Pipelines.Sockets.Unofficial.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\StackExchange.Redis.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\postman\CardiacMonitor.Final.postman_collection.json
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\postman\CardiacMonitor.Local.postman_environment.json
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\bin\Debug\net8.0\CardiacMonitor.xml
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\obj\Debug\net8.0\CardiacMonitor.xml

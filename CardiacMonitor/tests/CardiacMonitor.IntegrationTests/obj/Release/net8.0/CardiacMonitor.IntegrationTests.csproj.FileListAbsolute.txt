@@ -516,3 +516,6 @@ D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tes
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\obj\Release\net8.0\CardiacMonitor.IntegrationTests.pdb
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\obj\Release\net8.0\CardiacMonitor.IntegrationTests.genruntimeconfig.cache
 D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\obj\Release\net8.0\ref\CardiacMonitor.IntegrationTests.dll
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\bin\Release\net8.0\postman\CardiacMonitor.Final.postman_collection.json
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\bin\Release\net8.0\postman\CardiacMonitor.Local.postman_environment.json
+D:\Visual Studio\Mohammad-Abdelfattah-BinX-Backend-Internship\CardiacMonitor\tests\CardiacMonitor.IntegrationTests\bin\Release\net8.0\CardiacMonitor.xml

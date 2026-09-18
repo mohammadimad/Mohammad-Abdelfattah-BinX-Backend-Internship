@@ -1,321 +1,246 @@
 # Cardiac Monitor API
 
-A secure RESTful API for managing cardiac-care data, built with ASP.NET Core 8 and SQL Server. The system provides role-based access to patient profiles, vital signs, medications, and medical appointments, with JWT authentication and refresh-token rotation.
+[![CardiacMonitor CI](https://github.com/mohammadimad/Mohammad-Abdelfattah-BinX-Backend-Internship/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/mohammadimad/Mohammad-Abdelfattah-BinX-Backend-Internship/actions/workflows/ci.yml)
 
-## Features
-
-- Patient profile management
-- Cardiac vital-sign recording and history
-- Medication and treatment tracking
-- Medical appointment scheduling
-- JWT bearer authentication
-- Single-use refresh-token rotation
-- Role-based authorization for `Admin`, `Doctor`, and `Patient`
-- Patient ownership checks for protected medical data
-- FluentValidation request validation
-- Fixed-window rate limiting
-- CORS policy configuration
-- HTTPS redirection and production HSTS
-- Swagger/OpenAPI documentation with JWT support
-- Entity Framework Core migrations and seed data
+A .NET 8 REST API for cardiac-care workflows: Patient profiles, vital signs, medications, appointments, Nurse care assignments, Doctor availability, and medical alerts. Identity and JWT authentication protect the API; role and Patient-resource checks control access.
 
 ## Technology Stack
 
-| Component | Technology |
+| Area | Technology |
 | --- | --- |
-| Framework | ASP.NET Core 8 Web API |
-| Language | C# |
-| Database | Microsoft SQL Server |
-| ORM | Entity Framework Core 8 |
-| Authentication | ASP.NET Core Identity and JWT Bearer |
-| Validation | FluentValidation |
-| API documentation | Swagger / OpenAPI (Swashbuckle) |
-| Rate limiting | ASP.NET Core Rate Limiting middleware |
-
-## Project Structure
-
-```text
-CardiacMonitor/
-├── Controllers/     # HTTP endpoints and authorization rules
-├── Data/            # EF Core DbContext and migrations
-├── DTOs/            # Request and response contracts
-├── Models/          # Database entities
-├── Services/        # Application and business logic
-├── Validators/      # FluentValidation rules
-├── Properties/      # Local launch profiles
-├── Program.cs       # Service registration and middleware pipeline
-└── appsettings.json # Application configuration
-```
-
-## Domain Model
-
-- A patient may be linked one-to-one with an ASP.NET Core Identity user.
-- A patient can have multiple vital-sign records.
-- A patient can have multiple medications.
-- A patient can have multiple appointments.
-- Each appointment is assigned to one doctor.
-- Each Identity user can have multiple stored refresh tokens.
-
-Deleting a patient cascades to the patient's vital signs, medications, and appointments. Doctor deletion is restricted when the doctor is referenced by an appointment.
+| Framework and language | ASP.NET Core 8, C# |
+| Database and ORM | SQL Server, Entity Framework Core 8.0.11 |
+| Identity | ASP.NET Core Identity, JWT Bearer, single-use refresh-token rotation |
+| Validation | FluentValidation.AspNetCore 11.3.1 |
+| Cache | Redis via IDistributedCache and StackExchange.Redis |
+| Documentation | Swashbuckle.AspNetCore 6.6.2, XML comments, Swagger/OpenAPI |
+| Tests | xUnit, Moq, WebApplicationFactory, SQLite and EF Core InMemory |
 
 ## Prerequisites
 
-Install the following software before running the project:
+- .NET 8 SDK, Git, and a running SQL Server instance.
+- Redis on localhost:6379, or a reachable managed Redis instance.
+- An EF Core CLI tool matching this project's EF Core version.
+- A trusted HTTPS development certificate.
+- Postman is optional; Swagger can send requests without it.
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Microsoft SQL Server or SQL Server Express
-- Optional: SQL Server Management Studio
-- A valid ASP.NET Core HTTPS development certificate
+The automated integration suite uses SQLite and distributed memory caching. It does not require SQL Server or Redis, and does not replace testing those production providers.
 
-Verify the installed SDK:
-
-```powershell
-dotnet --version
-```
-
-## Configuration
-
-Update the connection string in `appsettings.json` for your SQL Server instance:
-
-```json
-{
-  "ConnectionStrings": {
-    "CardiacMonitorConnection": "Server=YOUR_SERVER;Database=CardiacMonitorDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true"
-  }
-}
-```
-
-The application also requires these JWT settings:
-
-```json
-{
-  "Jwt": {
-    "Key": "YOUR_LONG_RANDOM_SECRET_KEY",
-    "Issuer": "CardiacMonitorAPI",
-    "Audience": "CardiacMonitorAPI",
-    "DurationInMinutes": 60
-  }
-}
-```
-
-> [!IMPORTANT]
-> Never commit production database credentials or JWT signing keys. Use .NET User Secrets during local development and environment variables or a secret manager in production.
-
-Example development secret:
+## Clone and Restore
 
 ```powershell
-dotnet user-secrets init
-dotnet user-secrets set "Jwt:Key" "YOUR_LONG_RANDOM_SECRET_KEY"
-```
-
-Update the `AllowFrontendOnly` CORS policy in `Program.cs` with the real origin of the frontend application. An origin must contain only the scheme, host, and port, without a trailing path.
-
-## Database Setup
-
-Restore dependencies and apply the existing EF Core migrations:
-
-```powershell
-dotnet restore
-dotnet ef database update
-```
-
-If the `dotnet ef` command is unavailable, install the matching .NET 8 CLI tool:
-
-```powershell
-dotnet tool install --global dotnet-ef --version 8.*
-```
-
-The migrations seed the three application roles (`Admin`, `Doctor`, and `Patient`), sample patient and vital-sign data, and a development doctor account. Replace all seeded development credentials before deploying the application.
-
-## Running the API
-
-Ensure that the HTTPS development certificate is available:
-
-```powershell
+git clone https://github.com/mohammadimad/Mohammad-Abdelfattah-BinX-Backend-Internship.git
+cd Mohammad-Abdelfattah-BinX-Backend-Internship/CardiacMonitor
+dotnet restore CardiacMonitor.slnx
+dotnet tool install --global dotnet-ef --version 8.0.11
 dotnet dev-certs https --trust
 ```
 
-Run the project with the HTTPS launch profile:
+If dotnet-ef is already installed, check `dotnet ef --version` and update it to a compatible 8.x version rather than reinstalling blindly.
+
+## Configure Local Secrets
+
+Run from the CardiacMonitor directory. Replace the example values with your actual local configuration; never use a published example signing key in a shared or production environment.
 
 ```powershell
-dotnet run --launch-profile https
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:CardiacMonitorConnection" "Server=localhost;Database=CardiacMonitorDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true"
+dotnet user-secrets set "ConnectionStrings:Redis" "localhost:6379"
+dotnet user-secrets set "Jwt:Key" "REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_BYTES"
+dotnet user-secrets set "Jwt:Issuer" "CardiacMonitorAPI"
+dotnet user-secrets set "Jwt:Audience" "CardiacMonitorAPI"
+dotnet user-secrets set "Jwt:DurationInMinutes" "60"
 ```
 
-Default development addresses:
+Windows integrated authentication requires your Windows account to have SQL Server database permissions. For SQL authentication, use a secret connection string containing your own User ID and Password. The local TrustServerCertificate option is not a production TLS policy.
 
-- HTTPS: `https://localhost:7142`
-- HTTP: `http://localhost:5142`
-- Swagger UI: `https://localhost:7142/swagger`
-- OpenAPI document: `https://localhost:7142/swagger/v1/swagger.json`
+For a disposable local Redis instance, if Docker is installed:
 
-Swagger is enabled only when the application runs in the `Development` environment.
+```powershell
+docker run --name cardiacmonitor-redis -p 127.0.0.1:6379:6379 -d redis:7-alpine
+```
 
-## Authentication
+If that container already exists, use `docker start cardiacmonitor-redis`. Do not expose an unauthenticated Redis port publicly.
 
-### Register
+### Environment variable equivalents
+
+.NET configuration uses double underscores for nested environment keys. User Secrets apply to Development; production must supply values through environment variables or a secret manager.
+
+| Variable | Purpose | Example or requirement |
+| --- | --- | --- |
+| ASPNETCORE_ENVIRONMENT | Runtime environment | Development locally; Production when deployed |
+| ConnectionStrings__CardiacMonitorConnection | SQL Server connection | Your server, database, and credentials |
+| ConnectionStrings__Redis | Redis endpoint | localhost:6379 locally; authentication/TLS as required remotely |
+| Jwt__Key | HMAC signing secret | Random secret of at least 32 bytes; never commit it |
+| Jwt__Issuer | Accepted issuer | CardiacMonitorAPI |
+| Jwt__Audience | Accepted audience | CardiacMonitorAPI |
+| Jwt__DurationInMinutes | Access-token lifetime | 60 |
+| ASPNETCORE_URLS | Optional hosting bindings | Configure when not using a launch profile |
+
+Keep signing and database secrets out of Git and Postman exports. Rotate the existing checked-in development credentials before any shared deployment. The named CORS policy currently permits `http://localhost:5142`; edit its origin in Program.cs if your frontend uses a different address.
+
+## Apply Database Migrations
+
+Ensure SQL Server is running and configured before applying the existing migrations:
+
+```powershell
+dotnet ef database update --project CardiacMonitor.csproj
+```
+
+Use the migration history already in `Data/Migrations/`; do not create a new migration merely to start the project. Migrations include reference roles, demonstration clinical data, and a development Doctor identity. The roles are Admin, Doctor, Patient, and Nurse. Development seed accounts are not production bootstrap credentials.
+
+## Run and Open the API Documentation
+
+```powershell
+dotnet run --project CardiacMonitor.csproj --launch-profile https
+```
+
+- [Swagger UI](https://localhost:7142/swagger)
+- [OpenAPI JSON](https://localhost:7142/swagger/v1/swagger.json)
+- HTTP redirect address: `http://localhost:5142`
+
+Swagger is available only in Development. XML documentation is generated during build and loaded by Swashbuckle. In Swagger's Authorize dialog, enter the raw access token; the HTTP bearer scheme supplies the Bearer prefix.
+
+These URLs assume the checked-in HTTPS launch profile. If you change its ports or host bindings, use the address printed by the application.
+
+## Authentication and Initial Roles
+
+Public registration creates a **Patient** identity, assigns the Patient role, and creates its domain profile. It does not accept an Admin, Doctor, or Nurse role selection.
 
 ```http
 POST /api/auth/register
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "StrongPassword123!",
-  "role": "Patient"
+  "email": "patient@example.com",
+  "password": "ExamplePassword1!",
+  "firstName": "Lina",
+  "lastName": "Nasser",
+  "dateOfBirth": "1995-06-15",
+  "gender": "Female",
+  "contactNumber": "+970599111111"
 }
 ```
 
-### Log in
+Then send `POST /api/auth/login` with the registered email and password. It returns token, refreshToken, and message. Protected requests require:
 
 ```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "StrongPassword123!"
-}
+Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-A successful login returns an access token and a refresh token:
+Refresh with `POST /api/auth/refresh`, sending the **expired** access token and its matching unused refresh token. A still-valid access token is rejected. Refresh tokens expire after seven days and are consumed on successful rotation. Store the replacement pair.
 
-```json
-{
-  "token": "ACCESS_TOKEN",
-  "refreshToken": "REFRESH_TOKEN",
-  "message": "Tokens generated successfully."
-}
+### Bootstrap an Admin for disposable local development
+
+The repository does not automatically provision an Admin password. Register a separate local account, such as `local-admin@example.com`, through Swagger. A trusted database operator can explicitly grant it the Admin role in the disposable local database:
+
+```sql
+USE CardiacMonitorDb;
+DECLARE @Email nvarchar(256) = N'local-admin@example.com';
+
+IF NOT EXISTS (SELECT 1 FROM AspNetUsers WHERE Email = @Email)
+    THROW 50000, 'Register the local account first.', 1;
+
+INSERT INTO AspNetUserRoles (UserId, RoleId)
+SELECT u.Id, r.Id
+FROM AspNetUsers u
+CROSS JOIN AspNetRoles r
+WHERE u.Email = @Email AND r.Name = N'Admin'
+  AND NOT EXISTS (
+      SELECT 1 FROM AspNetUserRoles ur
+      WHERE ur.UserId = u.Id AND ur.RoleId = r.Id
+  );
 ```
 
-Send the access token with protected requests:
+Log in again after granting the role so the new JWT contains it. This is an explicit local bootstrap step, not a public role-escalation endpoint or a production provisioning process. Admins then create Doctor and Nurse identities through `/api/staff/doctors` and `/api/staff/nurses`.
 
-```http
-Authorization: Bearer ACCESS_TOKEN
-```
+## Endpoint Groups and Access
 
-In Swagger, select **Authorize** and enter the JWT access token. The Swagger security scheme adds the `Bearer` prefix automatically.
+The complete 39-operation inventory is in [REAMDE01.md](REAMDE01.md); the current contract is available in Swagger and the final Postman collection.
 
-### Refresh an expired access token
+| Group | Routes and access |
+| --- | --- |
+| Authentication | Register, login, refresh; public with credential/token validation |
+| Patients | Admin/Doctor list; Admin creates/deletes; Admin/Doctor updates; authorized resource reads |
+| Vital signs | Authorized resource reads and recording; Admin/Doctor updates/deletes |
+| Medications | Authorized resource reads; Admin/Doctor writes |
+| Appointments | Authorized resource reads; Admin/Doctor booking and changes |
+| Staff | Admin creates identities; role-protected staff lists |
+| Care assignments | Admin/Doctor assignment management; Nurse reads own active Patient list |
+| Doctor availability | Role-protected reads; Admin or owning Doctor manages slots |
+| Medical alerts | Authorized resource reads; Admin/Doctor/Nurse acknowledges; Admin/Doctor resolves |
 
-```http
-POST /api/auth/refresh
-Content-Type: application/json
+Patients can read only their own clinical resources; Nurses need active assignments for Patient-resource access. Admins and Doctors have wider clinical access. A Doctor's schedule-management ownership is checked separately from its role.
 
-{
-  "accessToken": "EXPIRED_ACCESS_TOKEN",
-  "refreshToken": "REFRESH_TOKEN"
-}
-```
+Appointment Doctor IDs are **Identity user ID strings**. Availability routes use **numeric Doctor profile IDs**. These IDs are not interchangeable. Nurse assignments likewise use numeric Nurse profile IDs.
 
-Refresh tokens are valid for seven days and become unusable after a successful refresh. The API returns a new access-token and refresh-token pair.
+## Final Postman Collection
 
-## Roles and Permissions
+Import both files:
 
-| Capability | Admin | Doctor | Patient |
-| --- | :---: | :---: | :---: |
-| List all patients | Yes | Yes | No |
-| View a patient | Yes | Yes | Own profile only |
-| Create a patient record | Yes | No | No |
-| Update a patient record | Yes | Yes | No |
-| Delete a patient record | Yes | No | No |
-| View vitals, medications, and appointments | Yes | Yes | Own records only |
-| Create vital signs | Yes | Yes | Own records only |
-| Update or delete vital signs | Yes | Yes | No |
-| Create, update, or delete medications | Yes | Yes | No |
-| Create, update, or delete appointments | Yes | Yes | No |
+- [Final collection](postman/CardiacMonitor.Final.postman_collection.json)
+- [Local environment](postman/CardiacMonitor.Local.postman_environment.json)
 
-## API Endpoints
+The older root-level collection is retained for historical reference; use the Final collection for Sprint 4. It contains all 39 operations in 10 folders, a strict expected-status test for every request, and illustrative saved responses. Every body-bearing endpoint has a request example; 204 responses intentionally have no JSON body.
 
-### Authentication
+### Run the documented workflow
 
-| Method | Endpoint | Access | Description |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | Public | Register an Identity user with an existing role |
-| `POST` | `/api/auth/login` | Public | Authenticate and receive a token pair |
-| `POST` | `/api/auth/refresh` | Public | Rotate an expired access token and refresh token |
+1. Start the API, SQL Server, and Redis against a **disposable** database.
+2. Select the imported environment and set baseUrl to the running HTTPS address.
+3. Bootstrap a local Admin as described above, log in, and put its real token in the private adminToken environment value.
+4. Run Authentication to create and log in a separate Patient. Scripts store patientToken, refreshToken, and patientId.
+5. Run Patients, Staff, and Doctor Availability in order. Scripts capture created record IDs and the Doctor's Identity user ID.
+6. Log in the newly created Nurse using nurseEmail and staffPassword; manually store its returned token in nurseToken.
+7. Continue Care Assignments, Vital Signs, Medications, Appointments, and Medical Alerts. A critical reading creates the alert used by subsequent requests.
+8. Run cleanup last. It deletes created clinical records and the standalone Patient record, ends the assignment, and disables availability. It does not delete the registered Patient, Doctor, or Nurse identities.
+9. Exclude Refresh Expired Patient Token from the initial runner pass. Run it manually after patientToken expires; it requires expiry and rotates the stored pair.
 
-### Patients
+Use a runner delay of **2500 ms** to stay below the general 30-request-per-minute limit. Login has its own five-attempts-per-minute limit. Do not disable rate limiting merely to run the collection.
 
-| Method | Endpoint | Access | Description |
-| --- | --- | --- | --- |
-| `GET` | `/api/patients` | Admin, Doctor | List all patients |
-| `GET` | `/api/patients/{id}` | Authenticated | Retrieve a patient; patients are limited to their own profile |
-| `POST` | `/api/patients` | Admin | Create a patient record |
-| `PUT` | `/api/patients/{id}` | Admin, Doctor | Update a patient record |
-| `DELETE` | `/api/patients/{id}` | Admin | Delete a patient record |
+The environment generates synthetic unique emails and license suffixes from runId and UTC date variables. For another full run, clear runId and the three email values first. IDs are captured from responses, not assumed to be 1. Do not export an environment after filling real secrets unless you remove them.
 
-### Vital Signs
+The collection changes data. Its status scripts are runnable assertions, but their presence does **not** mean a live SQL Server/Redis Postman run has been completed.
 
-| Method | Endpoint | Access | Description |
-| --- | --- | --- | --- |
-| `GET` | `/api/patients/{patientId}/vitals` | Authenticated | List a patient's vital signs |
-| `POST` | `/api/patients/{patientId}/vitals` | Admin, Doctor, owning Patient | Record vital signs |
-| `GET` | `/api/vitals/{id}` | Authenticated | Retrieve one vital-sign record |
-| `PUT` | `/api/vitals/{id}` | Admin, Doctor | Update a vital-sign record |
-| `DELETE` | `/api/vitals/{id}` | Admin, Doctor | Delete a vital-sign record |
+## Errors and Validation
 
-### Medications
+| Status | Meaning |
+| --- | --- |
+| 400 | Invalid input or a business-rule failure; includes field errors where applicable |
+| 401 | Missing/invalid authentication, or invalid login credentials |
+| 403 | Valid authentication but insufficient role/resource access |
+| 404 | Requested record does not exist |
+| 409 | An alert transition conflicts with its current state |
+| 429 | Fixed-window rate limit exceeded |
+| 500 | Safe ProblemDetails response for an unexpected error |
 
-| Method | Endpoint | Access | Description |
-| --- | --- | --- | --- |
-| `GET` | `/api/patients/{patientId}/medications` | Authenticated | List a patient's medications |
-| `POST` | `/api/patients/{patientId}/medications` | Admin, Doctor | Add a medication |
-| `GET` | `/api/medications/{id}` | Authenticated | Retrieve one medication |
-| `PUT` | `/api/medications/{id}` | Admin, Doctor | Update a medication |
-| `DELETE` | `/api/medications/{id}` | Admin, Doctor | Delete a medication |
+Validation examples include heart rate 30–250 bpm, oxygen saturation 50–100%, blood-pressure ranges, future appointment times, supported statuses, and contact-number formats. Request-specific constraints appear in validators. Errors use ProblemDetails or ValidationProblemDetails and include a trace ID.
 
-### Appointments
-
-| Method | Endpoint | Access | Description |
-| --- | --- | --- | --- |
-| `GET` | `/api/patients/{patientId}/appointments` | Authenticated | List a patient's appointments |
-| `POST` | `/api/patients/{patientId}/appointments` | Admin, Doctor | Schedule an appointment |
-| `GET` | `/api/appointments/{id}` | Authenticated | Retrieve one appointment |
-| `PUT` | `/api/appointments/{id}` | Admin, Doctor | Update an appointment |
-| `DELETE` | `/api/appointments/{id}` | Admin, Doctor | Delete an appointment |
-
-For authenticated read endpoints, users in the `Patient` role can access only records connected to their own patient profile. Unauthorized ownership attempts return `403 Forbidden`.
-
-## Validation Rules
-
-The API automatically validates incoming requests. Examples include:
-
-- Heart rate: 30–250 bpm
-- Oxygen saturation: 50–100%
-- Systolic blood pressure: 70–220 mmHg
-- Diastolic blood pressure: 40–130 mmHg
-- Appointment dates must be in the future
-- Appointment status must be `Scheduled`, `Completed`, or `Cancelled`
-- Medication end dates must be later than their start dates
-- Patient contact numbers must contain 10–15 digits, with an optional leading `+`
-
-Invalid requests receive an automatic `400 Bad Request` response containing validation details.
-
-## Rate Limiting
-
-The API defines two fixed-window policies:
-
-- `GeneralPolicy`: 30 requests per minute, with a queue of 2 requests
-- `StrictLoginPolicy`: 5 login attempts per minute with no queue
-
-Rejected requests receive `429 Too Many Requests`.
-
-## Security Notes
-
-- Use a strong JWT key stored outside source control.
-- Restrict CORS to trusted frontend origins.
-- Replace all seeded credentials before production deployment.
-- Serve production traffic exclusively over HTTPS.
-- Configure HSTS only after confirming that every production subdomain supports HTTPS.
-- Restrict public user registration or role selection before production use. The current registration contract accepts a requested existing role.
-- Consider revoking outstanding refresh tokens after password changes or account compromise.
-
-## Build
+## Build and Test
 
 ```powershell
-dotnet build
+dotnet build CardiacMonitor.slnx --no-restore
+dotnet test CardiacMonitor.slnx --no-restore --verbosity minimal
 ```
+
+Documentation tests verify XML summaries, the three Swagger example pairs, and exact operation parity between generated Swagger and the final Postman collection. See [REAMDE02.md](REAMDE02.md) for Day 2 verification and the peer walkthrough.
+
+## Troubleshooting
+
+- **SQL connection fails:** verify SQL Server is running, instance name and authentication are correct, and your account can create/update the target database.
+- **dotnet ef is missing:** install the compatible CLI tool, open a new terminal if PATH changed, and run commands from CardiacMonitor.
+- **Swagger is missing:** use the https launch profile and Development environment; rebuild to generate CardiacMonitor.xml.
+- **HTTPS certificate is untrusted:** run dotnet dev-certs https --trust and retry the correct HTTPS port.
+- **Availability requests fail:** ensure Redis is reachable and the numeric Doctor profile ID exists.
+- **403 after granting a role:** log in again; an existing JWT does not acquire new role claims automatically.
+- **Appointment creation returns 400:** check the Doctor Identity ID, future UTC timestamp, matching weekly slot, and booking conflicts.
+- **Postman receives 429:** slow the runner and wait for the configured window to reset.
+- **Refresh returns 400:** confirm the access token has expired and the original refresh token is unused and matches the access-token JTI.
+- **Postman returns 404:** run creation steps first and check captured IDs and selected environment.
+
+## Production Notes
+
+Use managed secrets, verified TLS, trusted CORS origins, restricted Redis connectivity, and secure identity provisioning. Replace seeded credentials. Keep Swagger exposure an explicit deployment decision. SQL query-budget tests are not production latency benchmarks, and the SQLite test suite does not establish SQL Server execution-plan performance.
 
 ## License
 
-No license file is currently included. Add a license before distributing or accepting external contributions.
+No license file is included. Confirm usage and distribution rights before redistributing the project.

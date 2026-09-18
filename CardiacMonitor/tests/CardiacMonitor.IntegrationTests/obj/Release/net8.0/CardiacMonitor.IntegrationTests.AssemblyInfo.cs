@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CardiacMonitor.IntegrationTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9710eba2e9fef2e408fc3b118d1e772fb8517532")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+77025539eb4a2907f2c59fc1b13fc5067c6cf07e")]
 [assembly: System.Reflection.AssemblyProductAttribute("CardiacMonitor.IntegrationTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CardiacMonitor.IntegrationTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

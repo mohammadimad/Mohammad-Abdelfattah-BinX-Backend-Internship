@@ -149,6 +149,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.OperationFilter<AuthorizeOperationFilter>();
+    options.IncludeXmlComments(Path.Combine(
+        AppContext.BaseDirectory, "CardiacMonitor.xml"));
+    options.OperationFilter<ApiExamplesOperationFilter>();
 });
 
 // Dependency Injection for services
