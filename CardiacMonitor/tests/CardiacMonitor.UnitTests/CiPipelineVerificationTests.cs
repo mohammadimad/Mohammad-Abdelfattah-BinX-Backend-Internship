@@ -6,6 +6,6 @@ public class CiPipelineVerificationTests
     [Fact]
     public void PipelineVerification_DetectsFailure()
     {
-       Assert.Equal(2, 1 + 2); // Corrected after observing the intentional failure.
+        Assert.Equal(3, 1 + 2); // Corrected after observing the intentional failure.
     }
 }
