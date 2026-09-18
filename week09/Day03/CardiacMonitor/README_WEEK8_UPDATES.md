@@ -1,0 +1,175 @@
+﻿# Cardiac Monitor API — Week 8 Updates
+
+This document describes the Week 8 query diagnostics, DTO projection, clinical-detail loading, composite indexes, Redis caching, and performance verification improvements.
+
+## What Was Added
+
+Week 8 combines query optimization with a repeatable measurement workflow:
+
+- Development-only EF Core SQL logging.
+- An SQL command counter and request-performance middleware.
+- Direct DTO projection with `AsNoTracking()` for read-only lists.
+- Database-side filtering, sorting, and pagination.
+- A patient clinical-details endpoint using `AsSplitQuery()`.
+- Composite indexes for Patient history, alerts, appointments, and Nurse assignments.
+- Redis cache-aside storage for active Doctor availability.
+- Cache invalidation after successful schedule changes.
+- An in-memory distributed cache for automated tests.
+- A before-and-after benchmark table and execution-plan review workflow.
+
+The core performance principle is:
+
+> A performance improvement must be demonstrated by actual measurements before and after the change, using equivalent database schemas and representative test data.
+
+## Query Diagnostics and Request Timing
+
+EF Core SQL logging uses `LogTo(Console.WriteLine, LogLevel.Information)` only in the `Development` environment. An SQL command counter and `DatabasePerformanceMiddleware` record request duration, executed command count, and HTTP status.
+
+Example log format; these numbers are illustrative, not benchmark results:
+
+```text
+Database profile GET /api/patients: 2 queries in 18.42 ms (HTTP 200).
+```
+
+Use these logs to investigate N+1 behavior: reading a list and then executing another query for every item. Compare command counts across list sizes.
+
+| Method | Route | Measurement focus |
+| --- | --- | --- |
+| `GET` | `/api/patients` | Paginated Patient list. |
+| `GET` | `/api/patients/{patientId}/vitals` | Paginated vital-sign history. |
+| `GET` | `/api/nurses/me/patients` | Active assigned Patient list. |
+
+`EnableSensitiveDataLogging` remains disabled by default, including in Development. Temporary local debugging that enables it must use synthetic or anonymized data.
+
+## DTO Projection for List Endpoints
+
+Read-only lists use `.Select()` directly into response DTOs with `AsNoTracking()`. This retrieves required columns without loading full tracked entities or unnecessary related data.
+
+| Service method | Read model |
+| --- | --- |
+| `PatientService.GetAllPatientsAsync` | Patient list. |
+| `VitalSignService.GetVitalSignsByPatientIdAsync` | Patient vital-sign history. |
+| `CareAssignmentService.GetAssignedPatientsAsync` | Patients actively assigned to the Nurse. |
+| `DoctorScheduleService.GetAvailabilityAsync` | Active Doctor availability slots. |
+
+Filtering, ordering, and `Skip()` / `Take()` pagination remain in the database query before materialization.
+
+Paginated Patient and vital-sign lists are expected to execute two data queries: a `COUNT` query and a page query. The assigned Nurse Patient list is expected to execute one data query. These are expectations from query structure, not measured endpoint totals. Authorization checks can add commands, such as verifying a Nurse's access before reading vital signs.
+
+## Clinical Details and Split Queries
+
+The clinical-details endpoint provides a combined Patient detail view:
+
+```http
+GET /api/patients/{id}/clinical-details
+```
+
+`PatientService.GetClinicalDetailsAsync` loads the Patient with vital signs, medications, appointments, medical alerts, and care assignments, then maps the result into `PatientClinicalDetailsResponse`.
+
+The query uses `AsNoTracking()` and `AsSplitQuery()`. Splitting collection reads avoids row multiplication caused by joining several one-to-many collections in one SQL statement.
+
+### Consistency trade-off
+
+Split queries execute multiple SQL statements. Concurrent writes can change data between statements. If a future use case requires a fully consistent snapshot, evaluate a transaction with an appropriate isolation level and measure its concurrency cost.
+
+## Composite Database Indexes
+
+The supporting indexes are configured through EF Core Fluent API and already included in this migration:
+
+```text
+20260903203751_Week7CareTeamSchedulingAndAlerts
+```
+
+| Table | Index columns | Purpose |
+| --- | --- | --- |
+| `VitalSigns` | `PatientId`, `RecordedAt` | Filter Patient history and order readings by time. |
+| `MedicalAlerts` | `PatientId`, `Status`, `CreatedAt` | Filter Patient alerts by status and support chronological ordering. |
+| `Appointments` | `DoctorId`, `AppointmentDate` | Locate Doctor bookings and prevent duplicate booking times through a unique index. |
+| `PatientCareAssignments` | `NurseProfileId`, `IsActive` | Locate a Nurse's active assignments. |
+
+Named indexes include `IX_VitalSigns_PatientId_RecordedAt`, `UX_Appointments_DoctorId_AppointmentDate`, and `IX_PatientCareAssignments_NurseProfileId_IsActive`.
+
+### SQL Server execution-plan review
+
+Capture SQL generated by EF Core, then inspect it in SQL Server Management Studio with **Include Actual Execution Plan** enabled (`Ctrl + M`):
+
+```sql
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+-- Execute the SQL captured from EF Core logging.
+```
+
+Check whether the relevant index is used, including whether the plan selects an `Index Seek` instead of a scan. Record logical reads and execution time alongside the actual plan. An index definition alone does not prove a performance improvement; the plan depends on the query and data distribution.
+
+## Redis Cache-Aside
+
+`Microsoft.Extensions.Caching.StackExchangeRedis` provides `IDistributedCache` backed by Redis. The local connection is configured under `ConnectionStrings`:
+
+```json
+{
+  "ConnectionStrings": {
+    "Redis": "localhost:6379"
+  }
+}
+```
+
+Only active Doctor availability is cached:
+
+| Setting | Value |
+| --- | --- |
+| Cache key | `doctor-availability:{doctorProfileId}` |
+| Expiration | Absolute expiration after 20 minutes. |
+| Cache miss | Read SQL Server and populate Redis. |
+| Cache hit | Return the cached availability response from Redis. |
+| Invalidation | Remove the Doctor's key after successfully adding or disabling a slot. |
+
+```text
+Availability request
+    |
+    +-- Cache hit  --> Return cached availability
+    |
+    +-- Cache miss --> Query SQL Server --> Populate Redis --> Return availability
+
+Successful schedule change --> Remove the Doctor's availability cache key
+```
+
+Live vital signs, medical-alert states, and active care assignments remain uncached because stale values can affect monitoring or access decisions.
+
+The `Testing` environment uses `DistributedMemoryCache` to avoid an external Redis dependency. Runtime environments use Redis. An in-memory test run does not verify connectivity to a real Redis server.
+
+## Before-and-After Measurement
+
+Use the same database schema, representative data volume, request parameters, authentication context, and fixed number of warm-up requests for both versions. Record the average of at least five measured runs per endpoint. Measure availability cache hits and misses separately.
+
+No measured baseline is provided in the current updates. Populate this table from actual SQL Server request logs:
+
+| Endpoint | Before: SQL count | Before: average latency | After: SQL count | After: average latency |
+| --- | --- | --- | --- | --- |
+| `/api/patients` | To be measured | To be measured | To be measured | To be measured |
+| `/api/patients/{id}/vitals` | To be measured | To be measured | To be measured | To be measured |
+| `/api/nurses/me/patients` | To be measured | To be measured | To be measured | To be measured |
+
+Attach request logs, data volume, execution plans, and logical-read counts to the performance review. Keep expected query counts separate from measured results.
+
+## Verification
+
+The existing Week 8 updates report:
+
+- 34 passing unit tests.
+- 18 passing integration tests.
+- 52 passing tests in total.
+
+These results are carried over from the existing documentation; the test suite was not rerun for this README formatting update.
+
+To repeat build and test verification from the CardiacMonitor project directory:
+
+```powershell
+dotnet build CardiacMonitor.slnx --no-restore
+dotnet test CardiacMonitor.slnx --no-build --no-restore
+```
+
+Passing automated tests does not fill the benchmark table or establish an execution-time improvement.
+
+## Final Result
+
+The API now combines focused list queries, split-query clinical details, supporting composite indexes, and cached Doctor availability with request-level SQL diagnostics. Before-and-after measurements and SQL Server execution-plan evidence remain to be collected before claiming a measured performance gain.

@@ -1,0 +1,64 @@
+erDiagram
+    AspNetUsers {
+        nvarchar Id PK
+        nvarchar UserName
+        nvarchar NormalizedUserName
+        nvarchar Email
+        nvarchar NormalizedEmail
+        bit EmailConfirmed
+        nvarchar PasswordHash
+        nvarchar SecurityStamp
+        nvarchar ConcurrencyStamp
+        nvarchar PhoneNumber
+        bit PhoneNumberConfirmed
+        bit TwoFactorEnabled
+        datetimeoffset LockoutEnd
+        bit LockoutEnabled
+        int AccessFailedCount
+    }
+
+    Patients {
+        int Id PK
+        nvarchar UserId FK "nullable, unique"
+        nvarchar FirstName
+        nvarchar LastName
+        datetime2 DateOfBirth
+        nvarchar Gender
+        nvarchar ContactNumber
+    }
+
+    VitalSigns {
+        int Id PK
+        int PatientId FK
+        int HeartRate
+        decimal OxygenSaturation "decimal(5,2)"
+        int SystolicBP
+        int DiastolicBP
+        datetime2 RecordedAt
+    }
+
+    Medications {
+        int Id PK
+        int PatientId FK
+        nvarchar Name
+        nvarchar Dosage
+        nvarchar Frequency
+        datetime2 StartDate
+        datetime2 EndDate "nullable"
+        bit IsActive
+    }
+
+    Appointments {
+        int Id PK
+        int PatientId FK
+        nvarchar DoctorId FK
+        datetime2 AppointmentDate
+        nvarchar Status
+        nvarchar Notes "nullable"
+    }
+
+    AspNetUsers o|--o| Patients : "owns profile (CASCADE)"
+    AspNetUsers ||--o{ Appointments : "Doctor role (RESTRICT)"
+    Patients ||--o{ VitalSigns : "has (CASCADE)"
+    Patients ||--o{ Medications : "has (CASCADE)"
+    Patients ||--o{ Appointments : "has (CASCADE)"

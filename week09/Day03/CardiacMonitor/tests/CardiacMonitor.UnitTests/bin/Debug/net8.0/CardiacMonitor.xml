@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CardiacMonitor</name>
+    </assembly>
+    <members>
+        <member name="M:CardiacMonitor.Controllers.AuthController.Register(CardiacMonitor.DTOs.RegisterRequest)">
+            <summary>Registers a Patient account and its linked clinical profile.</summary>
+            <param name="request">Contact details and a strong password. Public registration cannot select a privileged role.</param>
+            <response code="200">The Identity user and Patient profile were created.</response>
+            <response code="400">Validation failed or the email is already registered.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.AuthController.Login(CardiacMonitor.DTOs.LoginRequest)">
+            <summary>Authenticates an existing account and issues access and refresh tokens.</summary>
+            <param name="request">The registered email and password.</param>
+            <response code="200">A signed access token and a single-use refresh token.</response>
+            <response code="401">Invalid email or password.</response>
+            <response code="429">The login attempt limit was exceeded.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.AuthController.RefreshToken(CardiacMonitor.DTOs.TokenRequest)">
+            <summary>Rotates a matching expired access token and unused refresh token.</summary>
+            <param name="request">The expired access token and its original refresh token.</param>
+            <response code="200">A replacement token pair; the old refresh token is consumed.</response>
+            <response code="400">The pair is invalid, already used, revoked, expired, or the access token has not expired.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.PatientsController.GetAll(CardiacMonitor.DTOs.PatientQueryParameters)">
+            <summary>Lists Patients with database-side search, filtering, sorting, and pagination.</summary>
+            <param name="queryParameters">Page and page size, optional search and gender, and a supported sort key.</param>
+            <response code="200">A page of Patient profiles with total count and page metadata.</response>
+            <response code="400">Invalid paging or filtering parameters.</response>
+            <response code="401">A valid bearer token is required.</response>
+            <response code="403">Only Admins and Doctors can list all Patients.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.PatientsController.GetById(System.Int32)">
+            <summary>Reads a Patient profile after role and resource-access checks.</summary>
+            <param name="id">The numeric Patient profile ID, not an Identity user ID.</param>
+            <response code="200">The requested Patient profile.</response>
+            <response code="403">A Patient does not own the profile or a Nurse has no active assignment.</response>
+            <response code="404">The Patient profile does not exist.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.PatientsController.GetClinicalDetails(System.Int32)">
+            <summary>Reads a Patient and its clinical collections using EF Core split queries.</summary>
+            <param name="id">The Patient whose vitals, medications, appointments, alerts, and care assignments are requested.</param>
+            <response code="200">The profile and related clinical collections.</response>
+            <response code="403">The caller cannot access this Patient.</response>
+            <response code="404">The Patient does not exist.</response>
+        </member>
+        <member name="M:CardiacMonitor.Controllers.VitalSignsController.CreateVital(System.Int32,CardiacMonitor.DTOs.CreateVitalSignRequest)">
+            <summary>Records vital signs and creates a medical alert when a critical threshold is crossed.</summary>
+            <param name="patientId">The accessible Patient profile to receive the reading.</param>
+            <param name="request">Heart rate in bpm, oxygen saturation in percent, and blood pressure in mmHg.</param>
+            <response code="201">The reading was saved; a critical reading may also create an alert.</response>
+            <response code="400">One or more measurement values failed validation.</response>
+            <response code="403">The caller cannot access this Patient.</response>
+            <response code="404">The Patient does not exist.</response>
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.SeedInitialData">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.SeedInitialData.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.SeedInitialData.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.SeedInitialData.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.AddSeedDoctor">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddSeedDoctor.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddSeedDoctor.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddSeedDoctor.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.AddRefreshTokenTable">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddRefreshTokenTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddRefreshTokenTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.AddRefreshTokenTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.Week6DataModelImprovements">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.Week6DataModelImprovements.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.Data.Migrations.Week7CareTeamSchedulingAndAlerts">
+            <inheritdoc />
+        </member>
+        <member name="M:CardiacMonitor.Data.Migrations.Week7CareTeamSchedulingAndAlerts.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CardiacMonitor.DTOs.RegisterRequest">
+            <summary>Public Patient registration details. Privileged role selection is not part of this contract.</summary>
+        </member>
+        <member name="M:CardiacMonitor.DTOs.RegisterRequest.#ctor(System.String,System.String,System.String,System.String,System.DateTime,System.String,System.String)">
+            <summary>Public Patient registration details. Privileged role selection is not part of this contract.</summary>
+        </member>
+        <member name="T:CardiacMonitor.DTOs.LoginRequest">
+            <summary>Credentials for an existing Identity account.</summary>
+        </member>
+        <member name="M:CardiacMonitor.DTOs.LoginRequest.#ctor(System.String,System.String)">
+            <summary>Credentials for an existing Identity account.</summary>
+        </member>
+        <member name="T:CardiacMonitor.DTOs.TokenRequest">
+            <summary>An expired access token and its matching, unused refresh token.</summary>
+        </member>
+        <member name="M:CardiacMonitor.DTOs.TokenRequest.#ctor(System.String,System.String)">
+            <summary>An expired access token and its matching, unused refresh token.</summary>
+        </member>
+        <member name="T:CardiacMonitor.Infrastructure.ApiExamplesOperationFilter">
+            <summary>Adds illustrative JSON request and response examples to key clinical and authentication operations.</summary>
+        </member>
+        <member name="T:CardiacMonitor.Infrastructure.AuthorizeOperationFilter">
+            <summary>
+            Adds the JWT security requirement only to endpoints protected by authorization.
+            </summary>
+        </member>
+    </members>
+</doc>

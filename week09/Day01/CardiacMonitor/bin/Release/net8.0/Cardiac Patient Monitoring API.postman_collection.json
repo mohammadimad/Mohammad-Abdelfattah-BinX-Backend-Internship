@@ -1,0 +1,1500 @@
+{
+  "info": {
+    "_postman_id": "7e591803-16f8-4296-9da4-a209cc82dd2a",
+    "name": "Cardiac Patient Monitoring API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49370860"
+  },
+  "item": [
+    {
+      "name": "Patients",
+      "item": [
+        {
+          "name": "GET Paginated and Filtered Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients?page=1&pageSize=20&search=Sara&gender=Female&sort=lastName_asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "Sara"
+                },
+                {
+                  "key": "gender",
+                  "value": "Female"
+                },
+                {
+                  "key": "sort",
+                  "value": "lastName_asc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Get Patient by ID - Success",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "GET Get Patient by ID - Not Found",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Patient - Success",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"mohammad\",\r\n  \"lastName\": \"abelfattah\",\r\n  \"dateOfBirth\": \"2004-12-24T20:24:16.538Z\",\r\n  \"gender\": \"male\",\r\n  \"contactNumber\": \"+970598935271\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Patient - Success Copy",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"mohammad\",\r\n  \"lastName\": \"abelfattah3\",\r\n  \"dateOfBirth\": \"2004-12-24T20:24:16.538Z\",\r\n  \"gender\": \"Female\",\r\n  \"contactNumber\": \"+970598935271\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Patient - Bad Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"mohammad\",\r\n  \"lastName\": \"abelfattah\",\r\n  \"dateOfBirth\": \"2004-15-24T20:24:16.538Z\",\r\n  \"gender\": \"male\",\r\n  \"contactNumber\": \"+970598935271\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Patient - Success",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"wasef\",\r\n  \"lastName\": \"abelfattah\",\r\n  \"dateOfBirth\": \"1960-12-24T20:24:16.538Z\",\r\n  \"gender\": \"male\",\r\n  \"contactNumber\": \"+970598935271\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Delete Patient - Success",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Delete Patient - Not Found",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Patients/7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Patients",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vital Signs",
+      "item": [
+        {
+          "name": "GET Paginated and Filtered Patient Vital Signs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/1/vitals?page=1&pageSize=20&minHeartRate=60&maxHeartRate=120&sort=recordedAt_desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "1",
+                "vitals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "minHeartRate",
+                  "value": "60"
+                },
+                {
+                  "key": "maxHeartRate",
+                  "value": "120"
+                },
+                {
+                  "key": "sort",
+                  "value": "recordedAt_desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Record Vital Sign - Success",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"heartRate\": 72,\r\n  \"oxygenSaturation\": 98,\r\n  \"systolicBP\": 120,\r\n  \"diastolicBP\": 80\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/vitals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "vitals"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Get Vital Sign by ID",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "POST Record Vital Sign - Patient Not Found",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"heartRate\": 62,\r\n  \"oxygenSaturation\": 88,\r\n  \"systolicBP\": 100,\r\n  \"diastolicBP\": 80\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/3/vitals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "3",
+                "vitals"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Vital Sign",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id\": 1,\r\n    \"patientId\": 1,\r\n    \"heartRate\": 80,\r\n    \"oxygenSaturation\": 93.50,\r\n    \"systolicBP\": 112,\r\n    \"diastolicBP\": 80,\r\n    \"recordedAt\": \"2026-08-14T09:44:00.3711144\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vitals/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vitals",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Delete Vital Sign",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vitals/3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vitals",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Medications",
+      "item": [
+        {
+          "name": "GET Get Patient Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "medications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Medication - Succes",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Amlodipine 5mg\",\r\n  \"dosage\": \"1 Tablet (5mg)\",\r\n  \"frequency\": \"Once daily\",\r\n  \"startDate\": \"2026-08-15T08:00:00.000Z\",\r\n  \"endDate\": \"2026-09-15T08:00:00.000Z\",\r\n  \"isActive\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "medications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Medication - 400 Bad Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Amlodipine 5mg\",\r\n  \"dosage\": \"1 Tablet (5mg)\",\r\n  \"frequency\": \"Once daily\",\r\n  \"startDate\": \"2026-14-15T08:00:00.000Z\",\r\n  \"endDate\": \"2026-15-15T08:00:00.000Z\",\r\n  \"isActive\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "medications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Medication",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": " {\r\n  \"name\": \"panol\",\r\n        \"dosage\": \"68 sm\",\r\n        \"frequency\": \"3\",\r\n        \"startDate\": \"2026-08-02T15:40:55.432\",\r\n        \"endDate\": \"2026-08-17T15:40:55.432\",\r\n        \"isActive\": true\r\n }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/medications/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medications",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Delete Medicatio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medications/3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medications",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "GET Get Patient Appointments",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "POST Schedule Appointment - Success",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"doctorId\": \"doctor-id-123\",\r\n  \"appointmentDate\": \"2026-08-15T07:05:07.795Z\",\r\n  \"status\": \"active\",\r\n  \"notes\": \"clover\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Schedule Appointment - 400 Bad Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"doctorId\": \"doctor-id-123\",\r\n  \"appointmentDate\": \"2026-15-15T07:05:07.795Z\",\r\n  \"status\": \"active\",\r\n  \"notes\": \"clover\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/2/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "2",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"id\": 1,\r\n        \"patientId\": 1,\r\n        \"doctorId\": \"doctor-id-123\",\r\n        \"appointmentDate\": \"2024-06-14T18:50:11.474\",\r\n        \"status\": \"active\",\r\n        \"notes\": \"clover\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Week 7 - Nurse Care Team",
+      "item": [
+        {
+          "name": "1 - Admin Creates Nurse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const nurse = pm.response.json();",
+                  "  pm.collectionVariables.set('nurseProfileId', nurse.id);",
+                  "  pm.collectionVariables.set('nurseUserId', nurse.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"nurse.week7@cardiac.com\",\r\n  \"password\": \"Nurse123!\",\r\n  \"fullName\": \"Lina Khalil\",\r\n  \"licenseNumber\": \"RN-WEEK7-001\",\r\n  \"department\": \"Cardiology\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/nurses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "nurses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2 - Admin Lists Nurses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/nurses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "nurses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3 - Admin Assigns Nurse to Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('careAssignmentId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nurseProfileId\": {{nurseProfileId}},\r\n  \"notes\": \"Daily cardiac monitoring during the morning shift.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/care-assignments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "care-assignments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4 - Nurse Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('nurseAccessToken', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"nurse.week7@cardiac.com\",\r\n  \"password\": \"Nurse123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5 - Nurse Gets My Assigned Patients",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nurseAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nurses/me/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nurses",
+                "me",
+                "patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6 - Nurse Gets Assigned Patient Vitals",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nurseAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/vitals?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "vitals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7 - Admin Ends Care Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/care-assignments/{{careAssignmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "care-assignments",
+                "{{careAssignmentId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"wasef\",\r\n  \"password\": \"Wasef12$\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"patient.week7@cardiac.com\",\r\n  \"password\": \"Patient123!\",\r\n  \"firstName\": \"Omar\",\r\n  \"lastName\": \"Saleh\",\r\n  \"dateOfBirth\": \"1995-04-12T00:00:00Z\",\r\n  \"gender\": \"Male\",\r\n  \"contactNumber\": \"+970599555555\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Week 7 - Doctor Scheduling and Medical Alerts",
+      "item": [
+        {
+          "name": "1 - Admin Creates Doctor",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now().toString();",
+                  "pm.collectionVariables.set('doctorEmail', 'doctor.week7.' + suffix + '@cardiac.com');",
+                  "pm.collectionVariables.set('doctorPassword', 'Doctor123!');",
+                  "pm.collectionVariables.set('doctorLicenseNumber', 'MD-' + suffix);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Doctor is created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const doctor = pm.response.json();",
+                  "  pm.collectionVariables.set('doctorProfileId', doctor.id);",
+                  "  pm.collectionVariables.set('doctorUserId', doctor.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"{{doctorPassword}}\",\n  \"fullName\": \"Dr. Week Seven Demo\",\n  \"licenseNumber\": \"{{doctorLicenseNumber}}\",\n  \"specialty\": \"Cardiology\",\n  \"department\": \"Cardiac Care\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/doctors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "doctors"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2 - Doctor Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Doctor login succeeds', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('doctorAccessToken', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"{{doctorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3 - Admin Adds Tomorrow Availability",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];",
+                  "const inside = new Date();",
+                  "inside.setUTCDate(inside.getUTCDate() + 1);",
+                  "inside.setUTCHours(10, 0, 0, 0);",
+                  "const outside = new Date(inside);",
+                  "outside.setUTCHours(14, 0, 0, 0);",
+                  "pm.collectionVariables.set('doctorAvailabilityDay', dayNames[inside.getUTCDay()]);",
+                  "pm.collectionVariables.set('appointmentDateInside', inside.toISOString());",
+                  "pm.collectionVariables.set('appointmentDateOutside', outside.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Availability is created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('doctorAvailabilityId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": \"{{doctorAvailabilityDay}}\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"12:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "doctors",
+                "{{doctorProfileId}}",
+                "availability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4 - Admin Lists Doctor Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Availability list is returned', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "doctors",
+                "{{doctorProfileId}}",
+                "availability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5 - Admin Creates Appointment Inside Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Inside appointment is accepted', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('appointmentId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDateInside}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Week 7 appointment inside Doctor availability.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6 - Admin Tries Appointment Outside Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Outside appointment is rejected', () => pm.response.to.have.status(400));",
+                  "pm.test('ProblemDetails explains availability', () => pm.expect(pm.response.json().detail).to.include('weekly availability'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDateOutside}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"This request must be rejected because 14:00 UTC is outside the slot.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7 - Admin Creates Critical Vital Sign",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Critical reading is stored', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('vitalSignId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heartRate\": 190,\n  \"oxygenSaturation\": 82,\n  \"systolicBP\": 210,\n  \"diastolicBP\": 125\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/vitals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "vitals"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8 - Admin Gets Patient Alerts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alert list is returned', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const vitalSignId = Number(pm.collectionVariables.get('vitalSignId'));",
+                  "  const alert = pm.response.json().find(item => item.vitalSignId === vitalSignId);",
+                  "  pm.test('Critical alert exists for the new reading', () => {",
+                  "    pm.expect(alert).to.exist;",
+                  "    pm.expect(alert.severity).to.eql('Critical');",
+                  "    pm.expect(alert.status).to.eql('Open');",
+                  "  });",
+                  "  if (alert) pm.collectionVariables.set('medicalAlertId', alert.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}",
+                "alerts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9 - Admin Acknowledges Alert",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alert is acknowledged', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is Acknowledged', () => pm.expect(pm.response.json().status).to.eql('Acknowledged'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts/{{medicalAlertId}}/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts",
+                "{{medicalAlertId}}",
+                "acknowledge"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Doctor Resolves Alert",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Doctor resolves the alert', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is Resolved', () => pm.expect(pm.response.json().status).to.eql('Resolved'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts/{{medicalAlertId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts",
+                "{{medicalAlertId}}",
+                "resolve"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7142"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "nurseAccessToken",
+      "value": ""
+    },
+    {
+      "key": "patientId",
+      "value": "1"
+    },
+    {
+      "key": "nurseProfileId",
+      "value": "1"
+    },
+    {
+      "key": "nurseUserId",
+      "value": ""
+    },
+    {
+      "key": "careAssignmentId",
+      "value": "1"
+    },
+    {
+      "key": "doctorAccessToken",
+      "value": ""
+    },
+    {
+      "key": "doctorProfileId",
+      "value": ""
+    },
+    {
+      "key": "doctorUserId",
+      "value": ""
+    },
+    {
+      "key": "doctorEmail",
+      "value": ""
+    },
+    {
+      "key": "doctorPassword",
+      "value": "Doctor123!"
+    },
+    {
+      "key": "doctorLicenseNumber",
+      "value": ""
+    },
+    {
+      "key": "doctorAvailabilityId",
+      "value": ""
+    },
+    {
+      "key": "doctorAvailabilityDay",
+      "value": ""
+    },
+    {
+      "key": "appointmentDateInside",
+      "value": ""
+    },
+    {
+      "key": "appointmentDateOutside",
+      "value": ""
+    },
+    {
+      "key": "appointmentId",
+      "value": ""
+    },
+    {
+      "key": "vitalSignId",
+      "value": ""
+    },
+    {
+      "key": "medicalAlertId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

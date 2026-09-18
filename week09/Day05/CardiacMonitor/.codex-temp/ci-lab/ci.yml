@@ -1,0 +1,75 @@
+name: CardiacMonitor CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.suite }} tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: Unit
+            project: tests/CardiacMonitor.UnitTests/CardiacMonitor.UnitTests.csproj
+          - suite: Integration
+            project: tests/CardiacMonitor.IntegrationTests/CardiacMonitor.IntegrationTests.csproj
+    defaults:
+      run:
+        working-directory: CardiacMonitor
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Generated bin/obj files are tracked in the existing repository.
+      # Remove only these build directories from the disposable runner checkout.
+      - name: Remove stale build outputs from runner
+        shell: pwsh
+        run: |
+          $projectRoot = (Get-Location).Path
+          $buildPaths = @(
+            'bin', 'obj',
+            'tests/CardiacMonitor.UnitTests/bin',
+            'tests/CardiacMonitor.UnitTests/obj',
+            'tests/CardiacMonitor.IntegrationTests/bin',
+            'tests/CardiacMonitor.IntegrationTests/obj'
+          )
+          foreach ($relativePath in $buildPaths) {
+            $targetPath = [IO.Path]::GetFullPath((Join-Path $projectRoot $relativePath))
+            if (-not $targetPath.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar)) {
+              throw "Build output path is outside the project: $targetPath"
+            }
+            if (Test-Path -LiteralPath $targetPath) {
+              Remove-Item -LiteralPath $targetPath -Recurse -Force
+            }
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ matrix.project }}"
+
+      - name: Build
+        run: dotnet build "${{ matrix.project }}" --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test "${{ matrix.project }}" --configuration Release --no-build --no-restore --verbosity normal --logger trx --results-directory "TestResults/${{ matrix.suite }}"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.suite }}
+          path: CardiacMonitor/TestResults/${{ matrix.suite }}/*.trx
+          if-no-files-found: warn

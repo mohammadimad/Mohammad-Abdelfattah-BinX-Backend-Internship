@@ -1,0 +1,115 @@
+{
+  "input": "D:\\metrial internship\\Week_4_Authentication_Security_Summary.docx",
+  "fonts_by_char_count": {
+    "Calibri": 330
+  },
+  "direct_run_formatting_runs": 42,
+  "direct_paragraph_formatting_paragraphs": 26,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "WEEK 4 SUMMARY",
+      "style": "Normal"
+    },
+    {
+      "para_index": 3,
+      "text": "Program: Backend Development Internship (.NET)",
+      "style": "Normal"
+    },
+    {
+      "para_index": 4,
+      "text": "Week: Week 4 of 10 | Phase 2: Core Technical Training",
+      "style": "Normal"
+    },
+    {
+      "para_index": 5,
+      "text": "Theme: Authentication, Identity, Input Validation, and API Hardening",
+      "style": "Normal"
+    },
+    {
+      "para_index": 6,
+      "text": "Duration: 40 hours across five training days",
+      "style": "Normal"
+    },
+    {
+      "para_index": 54,
+      "text": "Day",
+      "style": "Normal"
+    },
+    {
+      "para_index": 55,
+      "text": "Focus",
+      "style": "Normal"
+    },
+    {
+      "para_index": 56,
+      "text": "Key Outcome",
+      "style": "Normal"
+    },
+    {
+      "para_index": 72,
+      "text": "BINX TECH | BACKEND DEVELOPMENT INTERNSHIP",
+      "style": "Header"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "WEEK 4 SUMMARY",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "text": "Authentication, Identity, Input Validation, and API Security in ASP.NET Core",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "Program: Backend Development Internship (.NET)",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "Week: Week 4 of 10 | Phase 2: Core Technical Training",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "Theme: Authentication, Identity, Input Validation, and API Hardening",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "WEEK 4 SUMMARY",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Authentication, Identity, Input Validation, and API Security in ASP.NET Core",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Program: ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Backend Development Internship (.NET)",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "run_text": "Week: ",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

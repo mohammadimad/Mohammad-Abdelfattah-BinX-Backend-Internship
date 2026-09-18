@@ -1,0 +1,2175 @@
+{
+  "info": {
+    "name": "Cardiac Monitor API — Final Sprint 4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Complete 39-endpoint documentation collection. Examples are illustrative, not recorded executions. Use a disposable database: POST/PUT/PATCH/DELETE requests change data. Set a real adminToken, run Authentication then entity folders in order, and obtain a nurseToken for the newly created Nurse before its assigned-patients request. Cleanup runs last. Refresh requires an expired Patient access token and is manual; exclude it from the initial runner execution. Allow a 2500 ms runner delay to respect GeneralPolicy."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('runId')) pm.environment.set('runId', Date.now().toString());",
+          "const runId = pm.environment.get('runId');",
+          "for (const kind of ['patient', 'doctor', 'nurse']) if (!pm.environment.get(kind + 'Email')) pm.environment.set(kind + 'Email', kind + '-' + runId + '@example.com');",
+          "const tomorrow = new Date(); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); tomorrow.setUTCHours(10, 0, 0, 0);",
+          "pm.environment.set('today', new Date().toISOString().slice(0, 10));",
+          "pm.environment.set('appointmentDate', tomorrow.toISOString());",
+          "pm.environment.set('availabilityDay', ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][tomorrow.getUTCDay()]);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Authentication",
+      "item": [
+        {
+          "name": "Register Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Register Patient. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\",\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/auth/register",
+                "description": "Register Patient. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\",\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Patient account and profile registered successfully.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login Patient. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('patientToken', data.token);",
+                  "pm.environment.set('refreshToken', data.refreshToken);",
+                  "const payload = JSON.parse(atob(data.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+                  "if (payload.patient_id) pm.environment.set('patientId', payload.patient_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/auth/login",
+                "description": "Login Patient. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"ACCESS_TOKEN_PLACEHOLDER\",\n  \"refreshToken\": \"REFRESH_TOKEN_PLACEHOLDER\",\n  \"message\": \"Tokens generated successfully.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Patients",
+      "item": [
+        {
+          "name": "List Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients?page=1&pageSize=20&sort=lastName_asc",
+            "description": "List Patients. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients?page=1&pageSize=20&sort=lastName_asc",
+                "description": "List Patients. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"userId\": \"IDENTITY_USER_ID\",\n      \"firstName\": \"Lina\",\n      \"lastName\": \"Nasser\",\n      \"dateOfBirth\": \"1995-06-15T00:00:00\",\n      \"gender\": \"Female\",\n      \"contactNumber\": \"+970599111111\"\n    }\n  ],\n  \"page\": 1,\n  \"pageSize\": 20,\n  \"totalCount\": 1,\n  \"totalPages\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Read Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": "Read Patient. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}",
+                "description": "Read Patient. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"userId\": \"IDENTITY_USER_ID\",\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15T00:00:00\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Read Clinical Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/clinical-details",
+            "description": "Read Clinical Details. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/clinical-details",
+                "description": "Read Clinical Details. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"patient\": {\n    \"id\": 1,\n    \"userId\": \"IDENTITY_USER_ID\",\n    \"firstName\": \"Lina\",\n    \"lastName\": \"Nasser\",\n    \"dateOfBirth\": \"1995-06-15T00:00:00\",\n    \"gender\": \"Female\",\n    \"contactNumber\": \"+970599111111\"\n  },\n  \"vitalSigns\": [],\n  \"medications\": [],\n  \"appointments\": [],\n  \"medicalAlerts\": [],\n  \"careAssignments\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Patient Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients",
+            "description": "Create Patient Record. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('cleanupPatientId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients",
+                "description": "Create Patient Record. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 20,\n  \"userId\": null,\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15T00:00:00\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": "Update Patient. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}",
+                "description": "Update Patient. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Lina\",\n  \"lastName\": \"Nasser\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"gender\": \"Female\",\n  \"contactNumber\": \"+970599111111\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Staff",
+      "item": [
+        {
+          "name": "Create Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/doctors",
+            "description": "Create Doctor. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"{{staffPassword}}\",\n  \"fullName\": \"Dr. Sami\",\n  \"licenseNumber\": \"MD-{{runId}}\",\n  \"specialty\": \"Cardiology\",\n  \"department\": \"Cardiology\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('doctorProfileId', data.id);",
+                  "pm.environment.set('doctorUserId', data.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/staff/doctors",
+                "description": "Create Doctor. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"{{staffPassword}}\",\n  \"fullName\": \"Dr. Sami\",\n  \"licenseNumber\": \"MD-{{runId}}\",\n  \"specialty\": \"Cardiology\",\n  \"department\": \"Cardiology\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"userId\": \"DOCTOR_IDENTITY_USER_ID\",\n  \"email\": \"doctor@example.com\",\n  \"fullName\": \"Dr. Sami\",\n  \"licenseNumber\": \"MD-1001\",\n  \"specialty\": \"Cardiology\",\n  \"department\": \"Cardiology\",\n  \"isActive\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Nurse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/nurses",
+            "description": "Create Nurse. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{nurseEmail}}\",\n  \"password\": \"{{staffPassword}}\",\n  \"fullName\": \"Nurse Rana\",\n  \"licenseNumber\": \"RN-{{runId}}\",\n  \"department\": \"Cardiology\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('nurseProfileId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/staff/nurses",
+                "description": "Create Nurse. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{nurseEmail}}\",\n  \"password\": \"{{staffPassword}}\",\n  \"fullName\": \"Nurse Rana\",\n  \"licenseNumber\": \"RN-{{runId}}\",\n  \"department\": \"Cardiology\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"userId\": \"NURSE_IDENTITY_USER_ID\",\n  \"email\": \"nurse@example.com\",\n  \"fullName\": \"Nurse Rana\",\n  \"licenseNumber\": \"RN-1001\",\n  \"department\": \"Cardiology\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Doctors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/staff/doctors",
+            "description": "List Doctors. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/staff/doctors",
+                "description": "List Doctors. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"userId\": \"DOCTOR_IDENTITY_USER_ID\",\n    \"email\": \"doctor@example.com\",\n    \"fullName\": \"Dr. Sami\",\n    \"licenseNumber\": \"MD-1001\",\n    \"specialty\": \"Cardiology\",\n    \"department\": \"Cardiology\",\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "List Nurses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/staff/nurses",
+            "description": "List Nurses. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/staff/nurses",
+                "description": "List Nurses. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"userId\": \"NURSE_IDENTITY_USER_ID\",\n    \"email\": \"nurse@example.com\",\n    \"fullName\": \"Nurse Rana\",\n    \"licenseNumber\": \"RN-1001\",\n    \"department\": \"Cardiology\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Doctor Availability",
+      "item": [
+        {
+          "name": "Add Availability",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+            "description": "Add Availability. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": \"{{availabilityDay}}\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"12:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('availabilityId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+                "description": "Add Availability. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dayOfWeek\": \"{{availabilityDay}}\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"12:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"doctorProfileId\": 10,\n  \"dayOfWeek\": \"Friday\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"12:00:00\",\n  \"isActive\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Read Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+            "description": "Read Availability. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/doctors/{{doctorProfileId}}/availability",
+                "description": "Read Availability. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"doctorProfileId\": 10,\n    \"dayOfWeek\": \"Friday\",\n    \"startTime\": \"09:00:00\",\n    \"endTime\": \"12:00:00\",\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Care Assignments",
+      "item": [
+        {
+          "name": "Assign Nurse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/care-assignments",
+            "description": "Assign Nurse. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nurseProfileId\": {{nurseProfileId}},\n  \"notes\": \"Daily vital monitoring\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('assignmentId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/care-assignments",
+                "description": "Assign Nurse. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nurseProfileId\": {{nurseProfileId}},\n  \"notes\": \"Daily vital monitoring\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"nurseProfileId\": 10,\n  \"nurseName\": \"Nurse Rana\",\n  \"assignedByUserId\": \"ADMIN_IDENTITY_USER_ID\",\n  \"assignedAt\": \"2026-09-17T10:00:00Z\",\n  \"endedAt\": null,\n  \"isActive\": true,\n  \"notes\": \"Daily vital monitoring\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Read Care Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/care-assignments",
+            "description": "Read Care Assignments. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/care-assignments",
+                "description": "Read Care Assignments. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"patientId\": 1,\n    \"nurseProfileId\": 10,\n    \"nurseName\": \"Nurse Rana\",\n    \"assignedByUserId\": \"ADMIN_IDENTITY_USER_ID\",\n    \"assignedAt\": \"2026-09-17T10:00:00Z\",\n    \"endedAt\": null,\n    \"isActive\": true,\n    \"notes\": \"Daily vital monitoring\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Nurse Assigned Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/nurses/me/patients",
+            "description": "Nurse Assigned Patients. Expected success status 200. Uses the Nurse token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nurseToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/nurses/me/patients",
+                "description": "Nurse Assigned Patients. Expected success status 200. Uses the Nurse token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{nurseToken}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"userId\": \"IDENTITY_USER_ID\",\n    \"firstName\": \"Lina\",\n    \"lastName\": \"Nasser\",\n    \"dateOfBirth\": \"1995-06-15T00:00:00\",\n    \"gender\": \"Female\",\n    \"contactNumber\": \"+970599111111\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Vital Signs",
+      "item": [
+        {
+          "name": "Record Critical Vitals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/vitals",
+            "description": "Record Critical Vitals. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heartRate\": 190,\n  \"oxygenSaturation\": 82,\n  \"systolicBP\": 210,\n  \"diastolicBP\": 125\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('vitalId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/vitals",
+                "description": "Record Critical Vitals. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"heartRate\": 190,\n  \"oxygenSaturation\": 82,\n  \"systolicBP\": 210,\n  \"diastolicBP\": 125\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"heartRate\": 190,\n  \"oxygenSaturation\": 82,\n  \"systolicBP\": 210,\n  \"diastolicBP\": 125,\n  \"recordedAt\": \"2026-09-17T10:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Vital History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/vitals?page=1&pageSize=20",
+            "description": "List Vital History. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/vitals?page=1&pageSize=20",
+                "description": "List Vital History. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 10,\n      \"patientId\": 1,\n      \"heartRate\": 190,\n      \"oxygenSaturation\": 82,\n      \"systolicBP\": 210,\n      \"diastolicBP\": 125,\n      \"recordedAt\": \"2026-09-17T10:00:00Z\"\n    }\n  ],\n  \"page\": 1,\n  \"pageSize\": 20,\n  \"totalCount\": 1,\n  \"totalPages\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Read Vital Sign",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+            "description": "Read Vital Sign. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+                "description": "Read Vital Sign. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"heartRate\": 190,\n  \"oxygenSaturation\": 82,\n  \"systolicBP\": 210,\n  \"diastolicBP\": 125,\n  \"recordedAt\": \"2026-09-17T10:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Vital Sign",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+            "description": "Update Vital Sign. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heartRate\": 80,\n  \"oxygenSaturation\": 98,\n  \"systolicBP\": 120,\n  \"diastolicBP\": 80\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+                "description": "Update Vital Sign. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"heartRate\": 80,\n  \"oxygenSaturation\": 98,\n  \"systolicBP\": 120,\n  \"diastolicBP\": 80\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Medications",
+      "item": [
+        {
+          "name": "Add Medication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/medications",
+            "description": "Add Medication. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aspirin\",\n  \"dosage\": \"81 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"{{today}}\",\n  \"endDate\": null,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('medicationId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/medications",
+                "description": "Add Medication. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Aspirin\",\n  \"dosage\": \"81 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"{{today}}\",\n  \"endDate\": null,\n  \"isActive\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"name\": \"Aspirin\",\n  \"dosage\": \"81 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"2026-09-17T00:00:00Z\",\n  \"endDate\": null,\n  \"isActive\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/medications",
+            "description": "List Medications. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/medications",
+                "description": "List Medications. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"patientId\": 1,\n    \"name\": \"Aspirin\",\n    \"dosage\": \"81 mg\",\n    \"frequency\": \"Daily\",\n    \"startDate\": \"2026-09-17T00:00:00Z\",\n    \"endDate\": null,\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Read Medication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+            "description": "Read Medication. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+                "description": "Read Medication. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"name\": \"Aspirin\",\n  \"dosage\": \"81 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"2026-09-17T00:00:00Z\",\n  \"endDate\": null,\n  \"isActive\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Medication",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+            "description": "Update Medication. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aspirin\",\n  \"dosage\": \"100 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"{{today}}\",\n  \"endDate\": null,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+                "description": "Update Medication. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Aspirin\",\n  \"dosage\": \"100 mg\",\n  \"frequency\": \"Daily\",\n  \"startDate\": \"{{today}}\",\n  \"endDate\": null,\n  \"isActive\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 Appointments",
+      "item": [
+        {
+          "name": "Book Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+            "description": "Book Appointment. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDate}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Cardiac follow-up\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('appointmentId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+                "description": "Book Appointment. Expected success status 201. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDate}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Cardiac follow-up\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"doctorId\": \"DOCTOR_IDENTITY_USER_ID\",\n  \"appointmentDate\": \"2026-09-18T10:00:00Z\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Cardiac follow-up\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+            "description": "List Appointments. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/appointments",
+                "description": "List Appointments. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"patientId\": 1,\n    \"doctorId\": \"DOCTOR_IDENTITY_USER_ID\",\n    \"appointmentDate\": \"2026-09-18T10:00:00Z\",\n    \"status\": \"Scheduled\",\n    \"notes\": \"Cardiac follow-up\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Read Appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+            "description": "Read Appointment. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+                "description": "Read Appointment. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"doctorId\": \"DOCTOR_IDENTITY_USER_ID\",\n  \"appointmentDate\": \"2026-09-18T10:00:00Z\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Cardiac follow-up\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+            "description": "Update Appointment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDate}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Updated follow-up\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+                "description": "Update Appointment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"doctorId\": \"{{doctorUserId}}\",\n  \"appointmentDate\": \"{{appointmentDate}}\",\n  \"status\": \"Scheduled\",\n  \"notes\": \"Updated follow-up\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 Medical Alerts",
+      "item": [
+        {
+          "name": "List Patient Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/alerts",
+            "description": "List Patient Alerts. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const data = pm.response.json();",
+                  "const alert = data.find(a => a.vitalSignId === Number(pm.environment.get('vitalId')));",
+                  "pm.test('Created critical alert exists', () => pm.expect(alert).to.exist);",
+                  "if (alert) pm.environment.set('alertId', alert.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{patientId}}/alerts",
+                "description": "List Patient Alerts. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 10,\n    \"patientId\": 1,\n    \"vitalSignId\": 10,\n    \"severity\": \"Critical\",\n    \"status\": \"Open\",\n    \"message\": \"Critical vital-sign thresholds detected.\",\n    \"createdAt\": \"2026-09-17T10:00:00Z\",\n    \"acknowledgedByUserId\": null,\n    \"acknowledgedAt\": null,\n    \"resolvedByUserId\": null,\n    \"resolvedAt\": null\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Read Alert",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}",
+            "description": "Read Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/alerts/{{alertId}}",
+                "description": "Read Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"vitalSignId\": 10,\n  \"severity\": \"Critical\",\n  \"status\": \"Open\",\n  \"message\": \"Critical vital-sign thresholds detected.\",\n  \"createdAt\": \"2026-09-17T10:00:00Z\",\n  \"acknowledgedByUserId\": null,\n  \"acknowledgedAt\": null,\n  \"resolvedByUserId\": null,\n  \"resolvedAt\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Acknowledge Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+                "description": "Acknowledge Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"vitalSignId\": 10,\n  \"severity\": \"Critical\",\n  \"status\": \"Acknowledged\",\n  \"message\": \"Critical vital-sign thresholds detected.\",\n  \"createdAt\": \"2026-09-17T10:00:00Z\",\n  \"acknowledgedByUserId\": \"ADMIN_IDENTITY_USER_ID\",\n  \"acknowledgedAt\": \"2026-09-17T10:10:00Z\",\n  \"resolvedByUserId\": null,\n  \"resolvedAt\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Resolve Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/resolve",
+            "description": "Resolve Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/api/alerts/{{alertId}}/resolve",
+                "description": "Resolve Alert. Expected success status 200. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 10,\n  \"patientId\": 1,\n  \"vitalSignId\": 10,\n  \"severity\": \"Critical\",\n  \"status\": \"Resolved\",\n  \"message\": \"Critical vital-sign thresholds detected.\",\n  \"createdAt\": \"2026-09-17T10:00:00Z\",\n  \"acknowledgedByUserId\": \"ADMIN_IDENTITY_USER_ID\",\n  \"acknowledgedAt\": \"2026-09-17T10:10:00Z\",\n  \"resolvedByUserId\": \"ADMIN_IDENTITY_USER_ID\",\n  \"resolvedAt\": \"2026-09-17T10:20:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 Cleanup and Token Maintenance",
+      "item": [
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+            "description": "Delete Appointment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+                "description": "Delete Appointment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Delete Medication",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+            "description": "Delete Medication. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/medications/{{medicationId}}",
+                "description": "Delete Medication. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Delete Vital Sign",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+            "description": "Delete Vital Sign. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/vitals/{{vitalId}}",
+                "description": "Delete Vital Sign. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "End Care Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/care-assignments/{{assignmentId}}",
+            "description": "End Care Assignment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/care-assignments/{{assignmentId}}",
+                "description": "End Care Assignment. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Disable Availability",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctor-availability/{{availabilityId}}",
+            "description": "Disable Availability. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/doctor-availability/{{availabilityId}}",
+                "description": "Disable Availability. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Delete Standalone Patient Record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{cleanupPatientId}}",
+            "description": "Delete Standalone Patient Record. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/api/patients/{{cleanupPatientId}}",
+                "description": "Delete Standalone Patient Record. Expected success status 204. Uses an Admin bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Refresh Expired Patient Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "description": "Refresh Expired Patient Token. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow. IMPORTANT: run manually only after the access token expires. A still-valid token correctly returns 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"{{patientToken}}\",\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('JSON response', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (pm.response.code === 200) {",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('patientToken', data.token);",
+                  "pm.environment.set('refreshToken', data.refreshToken);",
+                  "const payload = JSON.parse(atob(data.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+                  "if (payload.patient_id) pm.environment.set('patientId', payload.patient_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Illustrative successful response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/auth/refresh",
+                "description": "Refresh Expired Patient Token. Expected success status 200. Uses no bearer token. Saved response is an illustrative example. IDs must refer to existing records created by this workflow. IMPORTANT: run manually only after the access token expires. A still-valid token correctly returns 400.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accessToken\": \"{{patientToken}}\",\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"NEW_ACCESS_TOKEN_PLACEHOLDER\",\n  \"refreshToken\": \"NEW_REFRESH_TOKEN_PLACEHOLDER\",\n  \"message\": \"Tokens generated successfully.\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

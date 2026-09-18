@@ -1,0 +1,106 @@
+erDiagram
+    AspNetUsers {
+        string Id PK
+        string UserName
+        string Email
+    }
+    AspNetRoles {
+        string Id PK
+        string Name
+    }
+    AspNetUserRoles {
+        string UserId PK,FK
+        string RoleId PK,FK
+    }
+    Patients {
+        int Id PK
+        string UserId FK "nullable, unique"
+        string FirstName
+        string LastName
+    }
+    VitalSigns {
+        int Id PK
+        int PatientId FK
+        int HeartRate
+        decimal OxygenSaturation
+        int SystolicBP
+        int DiastolicBP
+        datetime RecordedAt
+    }
+    Medications {
+        int Id PK
+        int PatientId FK
+        string Name
+        bool IsActive
+    }
+    Appointments {
+        int Id PK
+        int PatientId FK
+        string DoctorId FK "Identity user ID"
+        datetime AppointmentDate
+        string Status
+    }
+    DoctorProfiles {
+        int Id PK
+        string UserId FK "unique"
+        string LicenseNumber "unique"
+        string Specialty
+        bool IsActive
+    }
+    NurseProfiles {
+        int Id PK
+        string UserId FK "unique"
+        string LicenseNumber "unique"
+    }
+    DoctorAvailabilitySlots {
+        int Id PK
+        int DoctorProfileId FK
+        int DayOfWeek
+        time StartTime
+        time EndTime
+        bool IsActive
+    }
+    PatientCareAssignments {
+        int Id PK
+        int PatientId FK
+        int NurseProfileId FK
+        string AssignedByUserId FK
+        bool IsActive
+        datetime AssignedAt
+        datetime EndedAt "nullable"
+    }
+    MedicalAlerts {
+        int Id PK
+        int PatientId FK
+        int VitalSignId FK "nullable, unique when present"
+        string Severity
+        string Status
+        string AcknowledgedByUserId FK "nullable"
+        string ResolvedByUserId FK "nullable"
+    }
+    RefreshTokens {
+        int Id PK
+        string UserId FK
+        string JwtId
+        bool IsUsed
+        bool IsRevoked
+        datetime ExpiryDate
+    }
+    AspNetUsers ||--o{ AspNetUserRoles : has
+    AspNetRoles ||--o{ AspNetUserRoles : grants
+    AspNetUsers o|--o| Patients : links
+    AspNetUsers ||--o| DoctorProfiles : has
+    AspNetUsers ||--o| NurseProfiles : has
+    AspNetUsers ||--o{ Appointments : doctor_identity
+    AspNetUsers ||--o{ RefreshTokens : owns
+    AspNetUsers ||--o{ PatientCareAssignments : assigned_by
+    AspNetUsers o|--o{ MedicalAlerts : acknowledged_by
+    AspNetUsers o|--o{ MedicalAlerts : resolved_by
+    Patients ||--o{ VitalSigns : has
+    Patients ||--o{ Medications : has
+    Patients ||--o{ Appointments : has
+    Patients ||--o{ PatientCareAssignments : receives
+    Patients ||--o{ MedicalAlerts : has
+    NurseProfiles ||--o{ PatientCareAssignments : provides
+    DoctorProfiles ||--o{ DoctorAvailabilitySlots : schedules
+    VitalSigns o|--o| MedicalAlerts : triggers
